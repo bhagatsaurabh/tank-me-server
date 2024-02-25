@@ -1,4 +1,4 @@
-import { listen } from "@colyseus/tools";
+import { listen } from '@colyseus/tools';
 
-import app from "./app.config";
+import app from './app.config';
 listen(app);
