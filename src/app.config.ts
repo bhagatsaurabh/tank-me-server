@@ -2,13 +2,13 @@ import config from '@colyseus/tools';
 import { monitor } from '@colyseus/monitor';
 import { playground } from '@colyseus/playground';
 
-import { Desert } from './rooms/Desert';
+import { GameRoom } from './rooms/GameRoom';
 import { Lobby } from './rooms/Lobby';
 
 export default config({
   initializeGameServer: (gameServer) => {
     gameServer.define('lobby', Lobby);
-    gameServer.define('desert', Desert).enableRealtimeListing();
+    gameServer.define('desert', GameRoom).enableRealtimeListing();
   },
 
   initializeExpress: (app) => {
