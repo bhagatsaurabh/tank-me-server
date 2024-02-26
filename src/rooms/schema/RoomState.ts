@@ -55,6 +55,9 @@ export class TurretRotation extends Schema {
 export class Player extends Schema {
   @type('string') sid: string;
   @type('string') uid: string;
+  @type('boolean') canFire: boolean;
+  @type('number') leftSpeed: number;
+  @type('number') rightSpeed: number;
   @type(Position) position: Position;
   @type(Rotation) rotation: Rotation;
   @type(BarrelRotation) barrelRotation: BarrelRotation;
@@ -70,8 +73,8 @@ export class Player extends Schema {
   update(tank: Tank) {
     this.position.update(tank.body.absolutePosition);
     this.rotation.update(tank.body.absoluteRotationQuaternion);
-    this.barrelRotation.update(tank.barrel.absoluteRotationQuaternion);
-    this.turretRotation.update(tank.turret.absoluteRotationQuaternion);
+    this.barrelRotation.update(tank.barrel.rotationQuaternion);
+    this.turretRotation.update(tank.turret.rotationQuaternion);
   }
 }
 

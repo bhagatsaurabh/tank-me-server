@@ -10,27 +10,26 @@ import { HavokPlugin, PhysicsAggregate, PhysicsShapeType } from '@babylonjs/core
 import HavokPhysics, { type HavokPhysicsWithBindings } from '@babylonjs/havok';
 
 import { choose, gravityVector, randInRange } from '@/game/utils';
-import { InputManager } from './input';
 import { Tank } from './models/tank';
 import { Ground } from './models/ground';
-import { RoomState } from '@/rooms/schema/RoomState';
-import { GameInputType, SpawnAxis } from '@/types/types';
+import { GameInputType, MessageType, SpawnAxis } from '@/types/types';
 import { spawnAxes } from './constants';
+import { GameRoom } from '@/rooms/GameRoom';
+import { IMessageFire } from '@/types/interfaces';
 
 export class World {
-  private physicsPlugin: HavokPlugin;
-  private scene: Scene;
-  private tankMeshes: AbstractMesh[] = [];
-  players: Record<string, Tank> = {};
   private static timeStep = 1 / 60;
   private static subTimeStep = 16;
+  private tankMeshes: AbstractMesh[] = [];
   private observers: Observer<Scene>[] = [];
+  physicsPlugin: HavokPlugin;
+  scene: Scene;
+  players: Record<string, Tank> = {};
 
   private constructor(
     public engine: NullEngine,
     public physicsEngine: HavokPhysicsWithBindings,
-    public inputs: Record<string, InputManager>,
-    public state: RoomState
+    public room: GameRoom
   ) {
     this.scene = new Scene(this.engine);
     this.physicsPlugin = new HavokPlugin(false, physicsEngine);
@@ -38,7 +37,7 @@ export class World {
     this.physicsPlugin.setTimeStep(0);
     this.scene.getPhysicsEngine()?.setSubTimeStep(World.subTimeStep);
   }
-  static async create(inputs: Record<string, InputManager>, state: RoomState): Promise<World> {
+  static async create(room: GameRoom): Promise<World> {
     const engine = new NullEngine({
       renderWidth: 512,
       renderHeight: 256,
@@ -47,7 +46,7 @@ export class World {
       lockstepMaxSteps: 4
     });
     const physicsEngine = await HavokPhysics();
-    const instance = new World(engine, physicsEngine, inputs, state);
+    const instance = new World(engine, physicsEngine, room);
 
     await World.importPlayerMesh(instance);
     await instance.initScene();
@@ -110,8 +109,8 @@ export class World {
   }
   private beforeStep() {
     const deltaTime = this.engine.getTimeStep() / 1000;
-    this.state.players.forEach((player) => {
-      const input = this.inputs[player.sid];
+    this.room.state.players.forEach((player) => {
+      const input = this.room.inputs[player.sid];
 
       let isMoving = false;
       const turningDirection = input.keys[GameInputType.LEFT] ? -1 : input.keys[GameInputType.RIGHT] ? 1 : 0;
@@ -164,26 +163,11 @@ export class World {
       }
       if (input.keys[GameInputType.FIRE]) {
         this.players[player.sid].fire();
+        this.room.broadcastEvent<IMessageFire>(MessageType.FIRE, { id: player.sid }, player.sid);
       }
 
       this.players[player.sid].checkStuck();
     });
-  }
-  async createTank(id: string) {
-    let spawn: Vector3;
-    if (Object.keys(this.players).length) {
-      // Mirroring the remaining player
-      spawn = Object.values(this.players)[0].body.absolutePosition;
-      spawn = new Vector3(-1 * spawn.x, 14, -1 * spawn.z);
-    } else {
-      spawn = this.getSpawnPoint();
-    }
-
-    this.players[id] = await Tank.create(id, this.tankMeshes, spawn, this.scene, this.physicsPlugin);
-    return this.players[id];
-  }
-  removeTank(id: string) {
-    this.players[id].dispose();
   }
   private start() {
     this.engine.runRenderLoop(this.render.bind(this));
@@ -211,7 +195,23 @@ export class World {
     }
   }
 
-  public destroy() {
+  async createTank(id: string) {
+    let spawn: Vector3;
+    if (Object.keys(this.players).length) {
+      // Mirroring the remaining player
+      spawn = Object.values(this.players)[0].body.absolutePosition;
+      spawn = new Vector3(-1 * spawn.x, 14, -1 * spawn.z);
+    } else {
+      spawn = this.getSpawnPoint();
+    }
+
+    this.players[id] = await Tank.create(this, id, this.tankMeshes[0], spawn);
+    return this.players[id];
+  }
+  removeTank(id: string) {
+    this.players[id].dispose();
+  }
+  destroy() {
     this.observers.forEach((observer) => observer.remove());
     this.scene.dispose();
     this.engine.dispose();

@@ -5,15 +5,15 @@ import { Player, RoomState } from './schema/RoomState';
 import { auth } from '../config/firebase';
 import { World } from '@/game/main';
 import { InputManager } from '@/game/input';
-import { GameInputType } from '@/types/types';
+import { GameInputType, MessageType } from '@/types/types';
 
-export class Desert extends Room<RoomState> {
+export class GameRoom extends Room<RoomState> {
   maxClients = 2;
   inputs: Record<string, InputManager> = {};
   world: World;
 
   async onCreate(_options: any) {
-    this.world = await World.create(this.inputs, this.state);
+    this.world = await World.create(this);
     this.setSimulationInterval(() => this.update());
     this.setState(new RoomState());
     this.setMessageListeners();
@@ -26,6 +26,8 @@ export class Desert extends Room<RoomState> {
   async onJoin(client: Client, _options: any, authData: DecodedIdToken) {
     const tank = await this.world.createTank(client.sessionId);
     const player = new Player(client.sessionId, authData.uid, tank);
+    tank.player = player;
+
     this.state.players.set(client.sessionId, player);
     this.inputs[client.sessionId] = new InputManager();
     console.log(client.sessionId, 'joined!');
@@ -49,7 +51,7 @@ export class Desert extends Room<RoomState> {
   }
 
   setMessageListeners() {
-    this.onMessage('input', (client, message: Record<GameInputType, boolean>) => {
+    this.onMessage(MessageType.INPUT, (client, message: Record<GameInputType, boolean>) => {
       if (this.state.status === 'matching') return;
 
       this.inputs[client.sessionId].set(message);
@@ -59,5 +61,11 @@ export class Desert extends Room<RoomState> {
     Object.keys(this.world.players).forEach((key) => {
       this.state.players.get(key).update(this.world.players[key]);
     });
+  }
+  broadcastEvent<T>(type: MessageType, message: T, originatorId: string) {
+    this.broadcast(type, message, { except: this.clients.find((c) => c.sessionId === originatorId) });
+  }
+  sendEvent<T>(type: MessageType, message: T, id: string) {
+    this.clients.find((c) => c.sessionId === id)?.send(type, message);
   }
 }

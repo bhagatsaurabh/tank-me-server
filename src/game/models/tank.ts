@@ -10,12 +10,15 @@ import {
   Physics6DoFConstraint,
   PhysicsBody,
   PhysicsAggregate,
-  PhysicsShapeSphere,
-  HavokPlugin
+  PhysicsShapeSphere
 } from '@babylonjs/core/Physics';
 
 import { Shell } from './shell';
 import { avg, clamp } from '@/game/utils';
+import { Player } from '@/rooms/schema/RoomState';
+import { World } from '../main';
+import { IMessageLoad } from '@/types/interfaces';
+import { MessageType } from '@/types/types';
 
 export class Tank {
   private static config = {
@@ -42,9 +45,12 @@ export class Tank {
     suspensionStiffness: 100,
     suspensionDamping: 7,
     noOfWheels: 10,
-    recoilForce: 7.5
+    recoilForce: 7.5,
+    cooldown: 5000,
+    loadCooldown: 2500
   };
 
+  player: Player;
   body!: TransformNode;
   barrel!: AbstractMesh;
   turret!: AbstractMesh;
@@ -59,43 +65,28 @@ export class Tank {
   private isStuck = false;
   private isCanonReady = true;
   private lastFired = 0;
-  private cooldown = 5000;
-  private loadCooldown = 2500;
   private observers: Observer<any>[] = [];
 
-  private constructor(
-    public id: string,
-    public rootMesh: AbstractMesh,
-    public spawn: Vector3,
-    public scene: Scene,
-    public physicsPlugin: HavokPlugin
-  ) {
-    this.setTransform();
-    this.setPhysics();
-
-    this.observers.push(this.scene.onAfterStepObservable.add(this.step.bind(this)));
+  private constructor(public world: World, public id: string, rootMesh: AbstractMesh, public spawn: Vector3) {
+    this.setTransform(rootMesh);
+    this.setPhysics(rootMesh);
+    this.observers.push(world.scene.onAfterStepObservable.add(this.afterStep.bind(this)));
   }
-  static async create(
-    id: string,
-    meshes: AbstractMesh[],
-    spawn: Vector3,
-    scene: Scene,
-    physicsPlugin: HavokPlugin
-  ) {
-    const cloned = meshes[0].clone(`${meshes[0].name.replace(':Ref', '')}:${id}`, null) as AbstractMesh;
-    const newTank = new Tank(id, cloned, spawn, scene, physicsPlugin);
-    await newTank.loadCannon();
+  static async create(world: World, id: string, rootMesh: AbstractMesh, spawn: Vector3) {
+    const cloned = rootMesh.clone(`${rootMesh.name.replace(':Ref', '')}:${id}`, null) as AbstractMesh;
+    const newTank = new Tank(world, id, cloned, spawn);
+    await newTank.loadCannon(true);
     return newTank;
   }
 
-  private setTransform() {
-    this.body = new TransformNode(`Root:${this.rootMesh.name}`, this.scene);
+  private setTransform(rootMesh: AbstractMesh) {
+    this.body = new TransformNode(`Root:${rootMesh.name}`, this.world.scene);
     for (let i = 0; i < Tank.config.noOfWheels; i += 1) {
-      const axleJoint = new TransformNode(`axlejoint${i}`, this.scene);
+      const axleJoint = new TransformNode(`axlejoint${i}`, this.world.scene);
       const axleMesh = MeshBuilder.CreateSphere(
         `axle${i}`,
         { diameterY: 0.6, diameterX: 0.75, diameterZ: 0.75, segments: 5 },
-        this.scene
+        this.world.scene
       );
       axleMesh.rotate(Axis.Z, Math.PI / 2, Space.LOCAL);
       axleMesh.bakeCurrentTransformIntoVertices();
@@ -105,24 +96,24 @@ export class Tank {
       this.axles.push(axleMesh);
     }
 
-    this.rootMesh.position = Vector3.Zero();
-    const childMeshes = this.rootMesh.getChildMeshes();
+    rootMesh.position = Vector3.Zero();
+    const childMeshes = rootMesh.getChildMeshes();
     this.barrel = childMeshes[0];
     this.turret = childMeshes[6];
     this.barrel.position.y = -0.51;
     this.barrel.position.z = 1.79;
     this.barrel.parent = this.turret;
-    this.rootMesh.parent = this.body;
+    rootMesh.parent = this.body;
     this.body.position = this.spawn;
 
-    this.rootMesh.isVisible = true;
+    rootMesh.isVisible = true;
     childMeshes.forEach((mesh) => (mesh.isVisible = true));
   }
-  private setPhysics() {
-    const bodyShape = new PhysicsShapeConvexHull(this.rootMesh as Mesh, this.scene);
-    const bodyShapeContainer = new PhysicsShapeContainer(this.scene);
-    bodyShapeContainer.addChildFromParent(this.body, bodyShape, this.rootMesh);
-    const bodyPB = new PhysicsBody(this.body, PhysicsMotionType.DYNAMIC, false, this.scene);
+  private setPhysics(rootMesh: AbstractMesh) {
+    const bodyShape = new PhysicsShapeConvexHull(rootMesh as Mesh, this.world.scene);
+    const bodyShapeContainer = new PhysicsShapeContainer(this.world.scene);
+    bodyShapeContainer.addChildFromParent(this.body, bodyShape, rootMesh);
+    const bodyPB = new PhysicsBody(this.body, PhysicsMotionType.DYNAMIC, false, this.world.scene);
     bodyShapeContainer.material = {
       friction: Tank.config.bodyFriction,
       restitution: Tank.config.bodyRestitution
@@ -130,9 +121,9 @@ export class Tank {
     bodyPB.shape = bodyShapeContainer;
     bodyPB.setMassProperties({ mass: Tank.config.bodyMass, centerOfMass: Vector3.Zero() });
 
-    const turretShape = new PhysicsShapeConvexHull(this.turret as Mesh, this.scene);
+    const turretShape = new PhysicsShapeConvexHull(this.turret as Mesh, this.world.scene);
     turretShape.material = { friction: 0, restitution: 0 };
-    const turretPB = new PhysicsBody(this.turret, PhysicsMotionType.DYNAMIC, false, this.scene);
+    const turretPB = new PhysicsBody(this.turret, PhysicsMotionType.DYNAMIC, false, this.world.scene);
     turretPB.shape = turretShape;
     turretPB.setMassProperties({ mass: Tank.config.turretMass, centerOfMass: Vector3.Zero() });
     this.turretMotor = this.createTurretConstraint(
@@ -146,9 +137,9 @@ export class Tank {
       turretPB
     );
 
-    const barrelShape = new PhysicsShapeConvexHull(this.barrel as Mesh, this.scene);
+    const barrelShape = new PhysicsShapeConvexHull(this.barrel as Mesh, this.world.scene);
     barrelShape.material = { friction: 0, restitution: 0 };
-    const barrelPB = new PhysicsBody(this.barrel, PhysicsMotionType.DYNAMIC, false, this.scene);
+    const barrelPB = new PhysicsBody(this.barrel, PhysicsMotionType.DYNAMIC, false, this.world.scene);
     barrelPB.shape = barrelShape;
     barrelPB.setMassProperties({ mass: Tank.config.barrelMass, centerOfMass: Vector3.Zero() });
     this.barrelMotor = this.createBarrelConstraint(
@@ -175,7 +166,7 @@ export class Tank {
       new Vector3(1.475, 0.2, -2)
     ];
 
-    const axleShape = new PhysicsShapeSphere(Vector3.Zero(), 0.375, this.scene);
+    const axleShape = new PhysicsShapeSphere(Vector3.Zero(), 0.375, this.world.scene);
     for (let i = 0; i < Tank.config.noOfWheels; i += 1) {
       const axleJoint = this.axleJoints[i];
       const axle = this.axles[i];
@@ -192,7 +183,7 @@ export class Tank {
           friction: Tank.config.wheelFriction,
           restitution: Tank.config.wheelRestitution
         },
-        this.scene
+        this.world.scene
       );
       (axle as Mesh).collisionRetryCount = 5;
 
@@ -230,7 +221,7 @@ export class Tank {
         { axis: PhysicsConstraintAxis.ANGULAR_Y, minLimit: 0, maxLimit: 0 },
         { axis: PhysicsConstraintAxis.ANGULAR_Z, minLimit: 0, maxLimit: 0 }
       ],
-      this.scene
+      this.world.scene
     );
 
     parent.addConstraint(child, _6dofConstraint);
@@ -271,7 +262,7 @@ export class Tank {
         { axis: PhysicsConstraintAxis.ANGULAR_Y, minLimit: 0, maxLimit: 0 },
         { axis: PhysicsConstraintAxis.ANGULAR_Z, minLimit: 0, maxLimit: 0 }
       ],
-      this.scene
+      this.world.scene
     );
 
     parent.addConstraint(child, _6dofConstraint);
@@ -312,7 +303,7 @@ export class Tank {
         },
         { axis: PhysicsConstraintAxis.ANGULAR_Z, minLimit: 0, maxLimit: 0 }
       ],
-      this.scene
+      this.world.scene
     );
 
     parent.addConstraint(child, _6dofConstraint);
@@ -322,16 +313,23 @@ export class Tank {
 
     return _6dofConstraint;
   }
-  private async loadCannon() {
+  private async loadCannon(init: boolean = false) {
+    if (!init) {
+      // Play load sound on original client
+      this.world.room.sendEvent<IMessageLoad>(MessageType.LOAD, {}, this.id);
+    }
     this.loadedShell = await Shell.create(this);
     this.isCanonReady = true;
   }
-  private step() {
+  private afterStep() {
     this.checkCannon();
   }
   private checkCannon() {
     const now = performance.now();
-    if (!this.isCanonReady && now - this.lastFired > this.loadCooldown) {
+
+    this.player.canFire = now - this.lastFired > Tank.config.cooldown;
+
+    if (!this.isCanonReady && now - this.lastFired > Tank.config.loadCooldown) {
       // Takes few ticks, explicitly setting isCanonReady to prevent multiple loads
       this.loadCannon();
       this.isCanonReady = true;
@@ -494,7 +492,7 @@ export class Tank {
   }
   public fire() {
     const now = performance.now();
-    if (now - this.lastFired <= this.cooldown) return;
+    if (now - this.lastFired <= Tank.config.cooldown) return;
 
     this.loadedShell.fire();
     this.simulateRecoil();
@@ -506,7 +504,7 @@ export class Tank {
     // TODO
   }
   public checkStuck() {
-    if (this.rootMesh.up.y < 0) this.isStuck = true;
+    if (this.body.up.y < 0) this.isStuck = true;
     // TODO: Delayed explosion ?
   }
   public dispose() {

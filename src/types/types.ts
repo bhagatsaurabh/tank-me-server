@@ -14,7 +14,9 @@ export enum GameInputType {
 
 export enum MessageType {
   DEFAULT = '*',
-  INPUT = 'input'
+  INPUT = 'input',
+  LOAD = 'load',
+  FIRE = 'fire'
 }
 export enum SpawnAxis {
   PX = 0,
