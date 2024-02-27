@@ -492,13 +492,14 @@ export class Tank {
   }
   public fire() {
     const now = performance.now();
-    if (now - this.lastFired <= Tank.config.cooldown) return;
+    if (now - this.lastFired <= Tank.config.cooldown) return false;
 
     this.loadedShell.fire();
     this.simulateRecoil();
 
     this.lastFired = now;
     this.isCanonReady = false;
+    return true;
   }
   public explode() {
     // TODO

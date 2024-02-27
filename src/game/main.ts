@@ -162,8 +162,9 @@ export class World {
         this.players[player.sid].resetTurret(deltaTime);
       }
       if (input.keys[GameInputType.FIRE]) {
-        this.players[player.sid].fire();
-        this.room.broadcastEvent<IMessageFire>(MessageType.FIRE, { id: player.sid }, player.sid);
+        if (this.players[player.sid].fire()) {
+          this.room.broadcastEvent<IMessageFire>(MessageType.ENEMY_FIRE, { id: player.sid }, player.sid);
+        }
       }
 
       this.players[player.sid].checkStuck();
