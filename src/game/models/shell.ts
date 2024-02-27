@@ -26,12 +26,12 @@ export class Shell {
   private scene!: Scene;
 
   private constructor(public tank: Tank) {
-    this.scene = tank.scene;
-    this.playerId = tank.rootMesh.name;
+    this.scene = tank.world.scene;
+    this.playerId = tank.id;
     this.loadAndSetTransform();
     this.setPhysics(tank.barrel.physicsBody!);
 
-    this.observers.push(tank.physicsPlugin.onCollisionObservable.add((ev) => this.onCollide(ev)));
+    this.observers.push(tank.world.physicsPlugin.onCollisionObservable.add((ev) => this.onCollide(ev)));
     this.observers.push(this.scene.onAfterStepObservable.add(this.step.bind(this)));
   }
 
@@ -95,13 +95,12 @@ export class Shell {
   }
   public fire() {
     this.unlock();
-    this.isSpent = true;
     this.mesh.isVisible = true;
-
     this.mesh.physicsBody?.applyImpulse(
       this.mesh.getDirection(forwardVector).normalize().scale(this.energy),
       this.mesh.getAbsolutePosition()
     );
+    this.isSpent = true;
   }
 
   private static setRefShell(scene: Scene) {
@@ -112,7 +111,7 @@ export class Shell {
     Shell.refPhysicsShape = new PhysicsShapeSphere(Vector3.Zero(), 0.05, scene);
   }
   static async create(tank: Tank): Promise<Shell> {
-    Shell.setRefShell(tank.scene);
+    Shell.setRefShell(tank.world.scene);
     const newShell = new Shell(tank);
     return newShell;
   }

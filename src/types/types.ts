@@ -16,7 +16,7 @@ export enum MessageType {
   DEFAULT = '*',
   INPUT = 'input',
   LOAD = 'load',
-  FIRE = 'fire'
+  ENEMY_FIRE = 'enemy-fire'
 }
 export enum SpawnAxis {
   PX = 0,
