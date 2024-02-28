@@ -13,10 +13,14 @@ export class Ground {
   }
   private static createMesh(scene: Scene) {
     const ground = new Ground();
-    return new Promise<Ground>((resolve) => {
+    return new Promise<Ground>(async (resolve, reject) => {
+      const heightMapData = await (
+        await fetch('http://localhost:2567/assets/map/desert/height.png')
+      ).arrayBuffer();
+
       ground.mesh = MeshBuilder.CreateGroundFromHeightMap(
         'ground',
-        '/assets/map/desert/height.png',
+        { data: new Uint8Array(heightMapData), width: 4096, height: 4096 },
         {
           width: 500,
           height: 500,
@@ -24,7 +28,8 @@ export class Ground {
           minHeight: 0,
           maxHeight: 14,
           updatable: false,
-          onReady: (mesh) => Ground.onGroundCreated(ground, scene, mesh, resolve)
+          onReady: (mesh) => Ground.onGroundCreated(ground, scene, mesh, resolve),
+          onError: (message: string, exception: any) => reject({ message, exception })
         },
         scene
       );
@@ -36,8 +41,6 @@ export class Ground {
     mesh: GroundMesh,
     done: (val: Ground) => void
   ) {
-    console.log(ground.mesh === mesh);
-
     const groundAgg = new PhysicsAggregate(
       mesh,
       PhysicsShapeType.MESH,
@@ -45,9 +48,9 @@ export class Ground {
       scene
     );
     groundAgg.body.setCollisionCallbackEnabled(true);
-    ground.mesh.collisionRetryCount = 5;
-
+    mesh.collisionRetryCount = 5;
     mesh.position.y = 0;
+    ground.mesh = mesh;
 
     done(ground);
   }

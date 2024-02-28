@@ -1,9 +1,11 @@
 import { GameInputType } from '@/types/types';
 
 export class InputManager {
-  keys: Record<GameInputType, boolean>;
+  keys: Partial<Record<GameInputType, boolean>>;
 
-  constructor() {}
+  constructor() {
+    this.keys = {};
+  }
 
   set(keys: Record<GameInputType, boolean>) {
     this.keys = this.validate(keys);
