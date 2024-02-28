@@ -1,5 +1,6 @@
 import { Room, Client } from '@colyseus/core';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
+import '@babylonjs/loaders/glTF/2.0/glTFLoader';
 
 import { Player, RoomState } from './schema/RoomState';
 import { auth } from '../config/firebase';
@@ -59,7 +60,7 @@ export class GameRoom extends Room<RoomState> {
   }
   update() {
     Object.keys(this.world.players).forEach((key) => {
-      this.state.players.get(key).update(this.world.players[key]);
+      this.state.players.get(key)?.update(this.world.players[key]);
     });
   }
   broadcastEvent<T>(type: MessageType, message: T, originatorId: string) {

@@ -67,6 +67,13 @@ export class Player extends Schema {
     super();
     this.sid = sid;
     this.uid = uid;
+    this.canFire = false;
+    this.leftSpeed = 0;
+    this.rightSpeed = 0;
+    this.position = new Position();
+    this.rotation = new Rotation();
+    this.barrelRotation = new BarrelRotation();
+    this.turretRotation = new TurretRotation();
     this.update(tank);
   }
 

@@ -1,13 +1,9 @@
-import '@babylonjs/core/Debug/debugLayer';
-import '@babylonjs/inspector';
-import '@babylonjs/loaders/glTF/2.0/glTFLoader';
-import { Scene, NullEngine, Observer } from '@babylonjs/core';
+import { Scene, NullEngine, Observer, FreeCamera } from '@babylonjs/core';
 import { SceneLoader } from '@babylonjs/core/Loading';
 import { Axis, Space, Vector3 } from '@babylonjs/core/Maths';
 import { AbstractMesh, MeshBuilder, TransformNode } from '@babylonjs/core/Meshes';
 import { PBRMaterial } from '@babylonjs/core/Materials';
 import { HavokPlugin, PhysicsAggregate, PhysicsShapeType } from '@babylonjs/core/Physics';
-import HavokPhysics, { type HavokPhysicsWithBindings } from '@babylonjs/havok';
 
 import { choose, gravityVector, randInRange } from '@/game/utils';
 import { Tank } from './models/tank';
@@ -16,21 +12,19 @@ import { GameInputType, MessageType, SpawnAxis } from '@/types/types';
 import { spawnAxes } from './constants';
 import { GameRoom } from '@/rooms/GameRoom';
 import { IMessageFire } from '@/types/interfaces';
+import { physicsEngine } from '@/app.config';
 
 export class World {
   private static timeStep = 1 / 60;
   private static subTimeStep = 16;
   private tankMeshes: AbstractMesh[] = [];
   private observers: Observer<Scene>[] = [];
+  private camera: FreeCamera;
   physicsPlugin: HavokPlugin;
   scene: Scene;
   players: Record<string, Tank> = {};
 
-  private constructor(
-    public engine: NullEngine,
-    public physicsEngine: HavokPhysicsWithBindings,
-    public room: GameRoom
-  ) {
+  private constructor(public engine: NullEngine, public room: GameRoom) {
     this.scene = new Scene(this.engine);
     this.physicsPlugin = new HavokPlugin(false, physicsEngine);
     this.scene.enablePhysics(gravityVector, this.physicsPlugin);
@@ -45,8 +39,7 @@ export class World {
       deterministicLockstep: true,
       lockstepMaxSteps: 4
     });
-    const physicsEngine = await HavokPhysics();
-    const instance = new World(engine, physicsEngine, room);
+    const instance = new World(engine, room);
 
     await World.importPlayerMesh(instance);
     await instance.initScene();
@@ -58,7 +51,7 @@ export class World {
   private static async importPlayerMesh(instance: World) {
     const { meshes } = await SceneLoader.ImportMeshAsync(
       null,
-      '/assets/models/',
+      'http://localhost:2567/assets/models/',
       'Panzer_I.glb',
       instance.scene
     );
@@ -80,8 +73,12 @@ export class World {
   private async initScene() {
     await Ground.create(this.scene);
     this.setBarriers();
+    this.setCamera();
 
     this.observers.push(this.scene.onBeforeStepObservable.add(this.beforeStep.bind(this)));
+  }
+  private setCamera() {
+    this.camera = new FreeCamera('default', Vector3.Zero(), this.scene, true);
   }
   private setBarriers() {
     const barrier = new TransformNode('barrier', this.scene);
@@ -215,6 +212,7 @@ export class World {
   destroy() {
     this.observers.forEach((observer) => observer.remove());
     this.scene.dispose();
+    this.physicsPlugin.dispose();
     this.engine.dispose();
   }
 }

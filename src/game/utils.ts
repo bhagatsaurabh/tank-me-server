@@ -1,4 +1,5 @@
 import { Vector3 } from '@babylonjs/core';
+import { webcrypto as crypto } from 'node:crypto';
 
 export const gravityVector = new Vector3(0, -9.8, 0);
 
@@ -7,7 +8,7 @@ export const denormalize = (norm: number, min: number, max: number) => {
 };
 export const randInRange = (min: number, max: number) => {
   const buf = new Uint32Array(1);
-  window.crypto.getRandomValues(buf);
+  crypto.getRandomValues(buf);
   return denormalize(buf[0] / (0xffffffff + 1), min, max);
 };
 export const forwardVector = new Vector3(0, 0, 1);
