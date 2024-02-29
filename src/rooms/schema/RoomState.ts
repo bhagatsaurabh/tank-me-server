@@ -7,7 +7,8 @@ export class Position extends Schema {
   @type('number') y: number;
   @type('number') z: number;
 
-  update(pos: Vector3) {
+  constructor(pos: Vector3) {
+    super();
     this.x = pos.x;
     this.y = pos.y;
     this.z = pos.z;
@@ -19,7 +20,8 @@ export class Rotation extends Schema {
   @type('number') z: number;
   @type('number') w: number;
 
-  update(rot: Quaternion) {
+  constructor(rot: Quaternion) {
+    super();
     this.x = rot.x;
     this.y = rot.y;
     this.z = rot.z;
@@ -32,7 +34,8 @@ export class BarrelRotation extends Schema {
   @type('number') z: number;
   @type('number') w: number;
 
-  update(rot: Quaternion) {
+  constructor(rot: Quaternion) {
+    super();
     this.x = rot.x;
     this.y = rot.y;
     this.z = rot.z;
@@ -45,7 +48,8 @@ export class TurretRotation extends Schema {
   @type('number') z: number;
   @type('number') w: number;
 
-  update(rot: Quaternion) {
+  constructor(rot: Quaternion) {
+    super();
     this.x = rot.x;
     this.y = rot.y;
     this.z = rot.z;
@@ -68,20 +72,16 @@ export class Player extends Schema {
     this.sid = sid;
     this.uid = uid;
     this.canFire = false;
-    this.leftSpeed = 0;
-    this.rightSpeed = 0;
-    this.position = new Position();
-    this.rotation = new Rotation();
-    this.barrelRotation = new BarrelRotation();
-    this.turretRotation = new TurretRotation();
     this.update(tank);
   }
 
   update(tank: Tank) {
-    this.position.update(tank.body.absolutePosition);
-    this.rotation.update(tank.body.absoluteRotationQuaternion);
-    this.barrelRotation.update(tank.barrel.rotationQuaternion);
-    this.turretRotation.update(tank.turret.rotationQuaternion);
+    this.leftSpeed = tank.leftSpeed;
+    this.rightSpeed = tank.rightSpeed;
+    this.position = new Position(tank.body.absolutePosition);
+    this.rotation = new Rotation(tank.body.absoluteRotationQuaternion);
+    this.barrelRotation = new BarrelRotation(tank.barrel.rotationQuaternion);
+    this.turretRotation = new TurretRotation(tank.turret.rotationQuaternion);
   }
 }
 

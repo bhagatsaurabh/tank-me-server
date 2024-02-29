@@ -7,9 +7,10 @@ import { auth } from '../config/firebase';
 import { World } from '@/game/main';
 import { InputManager } from '@/game/input';
 import { GameInputType, MessageType } from '@/types/types';
+import { throttle } from '@/game/utils';
 
 export class GameRoom extends Room<RoomState> {
-  maxClients = 2;
+  maxClients = 1;
   inputs: Record<string, InputManager> = {};
   world: World;
 
@@ -52,16 +53,16 @@ export class GameRoom extends Room<RoomState> {
   }
 
   setMessageListeners() {
-    this.onMessage(MessageType.INPUT, (client, message: Record<GameInputType, boolean>) => {
+    this.onMessage(MessageType.INPUT, (client, message: Partial<Record<GameInputType, boolean>>) => {
       if (this.state.status === 'matching') return;
 
       this.inputs[client.sessionId].set(message);
     });
   }
   update() {
-    Object.keys(this.world.players).forEach((key) => {
-      this.state.players.get(key)?.update(this.world.players[key]);
-    });
+    Object.keys(this.world.players).forEach((key) =>
+      this.state.players.get(key)?.update(this.world.players[key])
+    );
   }
   broadcastEvent<T>(type: MessageType, message: T, originatorId: string) {
     this.broadcast(type, message, { except: this.clients.find((c) => c.sessionId === originatorId) });
