@@ -78,7 +78,8 @@ export class World {
     this.observers.push(this.scene.onBeforeStepObservable.add(this.beforeStep.bind(this)));
   }
   private setCamera() {
-    this.camera = new FreeCamera('default', Vector3.Zero(), this.scene, true);
+    this.camera = new FreeCamera('default', new Vector3(245, 245, 245), this.scene, true);
+    this.camera.target = Vector3.Zero();
   }
   private setBarriers() {
     const barrier = new TransformNode('barrier', this.scene);
@@ -181,15 +182,15 @@ export class World {
   private getSpawnPoint(): Vector3 {
     switch (choose<SpawnAxis>(spawnAxes)) {
       case SpawnAxis.PX:
-        return new Vector3(245, 14, Math.round(randInRange(-245, 245)));
+        return new Vector3(240, 15, Math.round(randInRange(-240, 240)));
       case SpawnAxis.NX:
-        return new Vector3(-245, 14, Math.round(randInRange(-245, 245)));
+        return new Vector3(-240, 15, Math.round(randInRange(-240, 240)));
       case SpawnAxis.PZ:
-        return new Vector3(Math.round(randInRange(-245, 245)), 14, 245);
+        return new Vector3(Math.round(randInRange(-240, 240)), 15, 240);
       case SpawnAxis.NZ:
-        return new Vector3(Math.round(randInRange(-245, 245)), 14, -245);
+        return new Vector3(Math.round(randInRange(-240, 240)), 15, -240);
       default:
-        return new Vector3(245, 14, Math.round(randInRange(-245, 245)));
+        return new Vector3(240, 15, Math.round(randInRange(-240, 240)));
     }
   }
 
@@ -197,7 +198,7 @@ export class World {
     let spawn: Vector3;
     if (Object.keys(this.players).length) {
       // Mirroring the remaining player
-      spawn = Object.values(this.players)[0].body.absolutePosition;
+      spawn = Object.values(this.players)[0].body.position;
       spawn = new Vector3(-1 * spawn.x, 14, -1 * spawn.z);
     } else {
       spawn = this.getSpawnPoint();

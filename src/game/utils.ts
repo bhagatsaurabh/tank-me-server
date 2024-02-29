@@ -19,3 +19,20 @@ export const avg = (vals: number[]) => vals.reduce((acc, curr) => acc + curr, 0)
 const S4 = () => (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
 export const luid = () => `${S4()}${S4()}`;
 export const choose = <T>(vals: T[]): T => vals[Math.round(randInRange(0, vals.length - 1))];
+export const throttle = (cb: (...argmts: any) => void, delay: number) => {
+  let timerHandle: NodeJS.Timeout, args: any;
+  const throttled = (...a: any) => {
+    args = a;
+    if (!timerHandle) {
+      cb(...args);
+      args = null;
+      timerHandle = setTimeout(() => {
+        timerHandle = null;
+        if (args) {
+          throttled(...args);
+        }
+      }, delay);
+    }
+  };
+  return throttled;
+};

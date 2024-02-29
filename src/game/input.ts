@@ -7,13 +7,13 @@ export class InputManager {
     this.keys = {};
   }
 
-  set(keys: Record<GameInputType, boolean>) {
+  set(keys: Partial<Record<GameInputType, boolean>>) {
     this.keys = this.validate(keys);
   }
-  validate(keys: Record<GameInputType, boolean>): Record<GameInputType, boolean> {
+  validate(keys: Partial<Record<GameInputType, boolean>>): Partial<Record<GameInputType, boolean>> {
     const validatedKeys = { ...keys };
     Object.keys(validatedKeys).forEach((key: unknown) => {
-      if (typeof GameInputType[key as GameInputType] !== 'undefined') {
+      if (typeof GameInputType[key as GameInputType] === 'undefined') {
         delete validatedKeys[key as GameInputType];
       }
     });
