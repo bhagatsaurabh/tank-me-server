@@ -78,8 +78,8 @@ export class Player extends Schema {
   update(tank: Tank) {
     this.leftSpeed = tank.leftSpeed;
     this.rightSpeed = tank.rightSpeed;
-    this.position = new Position(tank.body.absolutePosition);
-    this.rotation = new Rotation(tank.body.absoluteRotationQuaternion);
+    this.position = new Position(tank.body.position);
+    this.rotation = new Rotation(tank.body.rotationQuaternion);
     this.barrelRotation = new BarrelRotation(tank.barrel.rotationQuaternion);
     this.turretRotation = new TurretRotation(tank.turret.rotationQuaternion);
   }
