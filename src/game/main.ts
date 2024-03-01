@@ -92,8 +92,8 @@ export class World {
     barrier3.rotate(Axis.Y, Math.PI / 2, Space.LOCAL);
     barrier3.position = new Vector3(-249, 9, 0);
     const barrier4 = MeshBuilder.CreateBox('barrier4', { width: 500, height: 20, depth: 1 }, this.scene);
-    barrier4.rotate(Axis.Y, Math.PI / 2, Space.LOCAL);
     barrier4.position = new Vector3(249, 9, 0);
+    barrier4.rotate(Axis.Y, -Math.PI / 2, Space.LOCAL);
 
     barrier1.parent = barrier;
     barrier2.parent = barrier;

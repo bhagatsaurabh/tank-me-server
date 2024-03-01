@@ -343,7 +343,7 @@ export class Tank {
     const contactPoint = this.body.up
       .normalize()
       .scale(1)
-      .add(this.body.absolutePosition)
+      .add(this.body.position)
       .add(this.turret.forward.normalize().scale(1));
     this.body.physicsBody!.applyImpulse(recoilVector, contactPoint);
   }
