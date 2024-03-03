@@ -62,6 +62,7 @@ export class Player extends Schema {
   @type('boolean') canFire: boolean;
   @type('number') leftSpeed: number;
   @type('number') rightSpeed: number;
+  @type('number') health: number;
   @type(Position) position: Position;
   @type(Rotation) rotation: Rotation;
   @type(BarrelRotation) barrelRotation: BarrelRotation;
@@ -78,6 +79,7 @@ export class Player extends Schema {
   update(tank: Tank) {
     this.leftSpeed = tank.leftSpeed;
     this.rightSpeed = tank.rightSpeed;
+    this.health = tank.health;
     this.position = new Position(tank.body.position);
     this.rotation = new Rotation(tank.body.rotationQuaternion);
     this.barrelRotation = new BarrelRotation(tank.barrel.rotationQuaternion);

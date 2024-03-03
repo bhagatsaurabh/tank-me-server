@@ -60,4 +60,9 @@ export class Ground {
 
     done(ground);
   }
+
+  dispose() {
+    this.mesh.physicsBody?.dispose();
+    this.mesh?.dispose();
+  }
 }
