@@ -5,7 +5,7 @@ import { AbstractMesh, MeshBuilder, TransformNode } from '@babylonjs/core/Meshes
 import { PBRMaterial } from '@babylonjs/core/Materials';
 import { HavokPlugin, PhysicsAggregate, PhysicsShapeType } from '@babylonjs/core/Physics';
 
-import { choose, gravityVector, randInRange } from '@/game/utils';
+import { choose, gravityVector, randInRange, throttle } from '@/game/utils';
 import { Tank } from './models/tank';
 import { Ground } from './models/ground';
 import { GameInputType, MessageType, SpawnAxis } from '@/types/types';
@@ -17,17 +17,22 @@ import { physicsEngine } from '@/app.config';
 export class World {
   private static timeStep = 1 / 60;
   private static subTimeStep = 16;
+  private static deltaTime = World.timeStep;
+
   private tankMeshes: AbstractMesh[] = [];
   private observers: Observer<Scene>[] = [];
   private camera: FreeCamera;
+  private ground!: Ground;
   physicsPlugin: HavokPlugin;
   scene: Scene;
   players: Record<string, Tank> = {};
+  // private debugDeltaTime = throttle((d) => console.log(d, World.deltaTime), 1000);
 
   private constructor(public engine: NullEngine, public room: GameRoom) {
     this.scene = new Scene(this.engine);
     this.physicsPlugin = new HavokPlugin(false, physicsEngine);
     this.scene.enablePhysics(gravityVector, this.physicsPlugin);
+    // Not simulating anything until the scene is fully loaded
     this.physicsPlugin.setTimeStep(0);
     this.scene.getPhysicsEngine()?.setSubTimeStep(World.subTimeStep);
   }
@@ -40,11 +45,9 @@ export class World {
       lockstepMaxSteps: 4
     });
     const instance = new World(engine, room);
-
     await World.importPlayerMesh(instance);
     await instance.initScene();
     instance.start();
-
     return instance;
   }
 
@@ -55,23 +58,22 @@ export class World {
       'Panzer_I.glb',
       instance.scene
     );
-
     meshes[0].position = Vector3.Zero();
     meshes[0].rotation = Vector3.Zero();
     meshes[0].scaling = Vector3.One();
+
     const container = meshes.shift();
     setTimeout(() => container?.dispose());
-
     meshes.forEach((mesh) => {
       mesh.parent = mesh !== meshes[0] ? meshes[0] : null;
       (mesh.material as PBRMaterial).metallicF0Factor = 0;
       mesh.isVisible = false;
     });
-    meshes[0].name = 'Panzer_I:Ref';
+    meshes[0].name = 'Panzer:Ref';
     instance.tankMeshes = meshes;
   }
   private async initScene() {
-    await Ground.create(this.scene);
+    this.ground = await Ground.create(this.scene);
     this.setBarriers();
     this.setCamera();
 
@@ -106,7 +108,6 @@ export class World {
     new PhysicsAggregate(barrier4, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
   }
   private beforeStep() {
-    const deltaTime = this.engine.getTimeStep() / 1000;
     this.room.state.players.forEach((player) => {
       const input = this.room.inputs[player.sid];
 
@@ -117,26 +118,26 @@ export class World {
       const isBarrelMoving = input.keys[GameInputType.BARREL_UP] || input.keys[GameInputType.BARREL_DOWN];
 
       if (input.keys[GameInputType.FORWARD]) {
-        this.players[player.sid].accelerate(deltaTime, turningDirection);
+        this.players[player.sid].accelerate(World.deltaTime, turningDirection);
         isMoving = true;
       }
       if (input.keys[GameInputType.REVERSE]) {
-        this.players[player.sid].reverse(deltaTime, turningDirection);
+        this.players[player.sid].reverse(World.deltaTime, turningDirection);
         isMoving = true;
       }
       if (input.keys[GameInputType.LEFT]) {
-        this.players[player.sid].left(deltaTime, isAccelerating);
+        this.players[player.sid].left(World.deltaTime, isAccelerating);
         isMoving = true;
       }
       if (input.keys[GameInputType.RIGHT]) {
-        this.players[player.sid].right(deltaTime, isAccelerating);
+        this.players[player.sid].right(World.deltaTime, isAccelerating);
         isMoving = true;
       }
       if (input.keys[GameInputType.BRAKE]) {
-        this.players[player.sid].brake(deltaTime);
+        this.players[player.sid].brake(World.deltaTime);
       }
       if (!isMoving) {
-        this.players[player.sid].decelerate(deltaTime);
+        this.players[player.sid].decelerate(World.deltaTime);
       }
       if (!isTurretMoving) {
         this.players[player.sid].stopTurret();
@@ -145,19 +146,19 @@ export class World {
         this.players[player.sid].stopBarrel();
       }
       if (input.keys[GameInputType.TURRET_LEFT]) {
-        this.players[player.sid].turretLeft(deltaTime);
+        this.players[player.sid].turretLeft(World.deltaTime);
       }
       if (input.keys[GameInputType.TURRET_RIGHT]) {
-        this.players[player.sid].turretRight(deltaTime);
+        this.players[player.sid].turretRight(World.deltaTime);
       }
       if (input.keys[GameInputType.BARREL_UP]) {
-        this.players[player.sid].barrelUp(deltaTime);
+        this.players[player.sid].barrelUp(World.deltaTime);
       }
       if (input.keys[GameInputType.BARREL_DOWN]) {
-        this.players[player.sid].barrelDown(deltaTime);
+        this.players[player.sid].barrelDown(World.deltaTime);
       }
       if (input.keys[GameInputType.RESET] && !isTurretMoving && !isBarrelMoving) {
-        this.players[player.sid].resetTurret(deltaTime);
+        this.players[player.sid].resetTurret(World.deltaTime);
       }
       if (input.keys[GameInputType.FIRE]) {
         if (this.players[player.sid].fire()) {
@@ -171,10 +172,6 @@ export class World {
   private start() {
     this.engine.runRenderLoop(this.render.bind(this));
     this.physicsPlugin.setTimeStep(World.timeStep);
-  }
-  private stop() {
-    this.physicsPlugin.setTimeStep(0);
-    this.engine.stopRenderLoop();
   }
   private render() {
     this.scene.render();
@@ -197,7 +194,7 @@ export class World {
   async createTank(id: string) {
     let spawn: Vector3;
     if (Object.keys(this.players).length) {
-      // Mirroring the remaining player
+      // Mirroring the 'other' player
       spawn = Object.values(this.players)[0].body.position;
       spawn = new Vector3(-1 * spawn.x, 14, -1 * spawn.z);
     } else {
@@ -208,12 +205,13 @@ export class World {
     return this.players[id];
   }
   removeTank(id: string) {
-    this.players[id].dispose();
+    this.players[id]?.dispose();
   }
   destroy() {
     this.observers.forEach((observer) => observer.remove());
+    Object.values(this.players).forEach((player) => player?.dispose());
+    this.ground?.dispose();
     this.scene.dispose();
-    this.physicsPlugin.dispose();
     this.engine.dispose();
   }
 }

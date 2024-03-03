@@ -22,6 +22,7 @@ export class Shell {
   private isSpent: boolean = false;
   private lock!: LockConstraint;
   private energy = 0.02;
+  private impactEnergy = 5;
   private observers: Observer<any>[] = [];
 
   private constructor(public tank: Tank, mesh: AbstractMesh) {
@@ -30,7 +31,7 @@ export class Shell {
     this.setPhysics(tank.barrel.physicsBody!);
 
     this.observers.push(tank.world.physicsPlugin.onCollisionObservable.add((ev) => this.onCollide(ev)));
-    this.observers.push(this.tank.world.scene.onAfterStepObservable.add(this.afterStep.bind(this)));
+    this.observers.push(this.tank.world.scene.onBeforeStepObservable.add(this.beforeStep.bind(this)));
   }
   private static setRefShell(scene: Scene) {
     if (Shell.refShell) return;
@@ -48,7 +49,6 @@ export class Shell {
   private setTransform(mesh: AbstractMesh) {
     mesh.position.z = 4.8;
     this.tank.barrel.computeWorldMatrix();
-    // mesh.rotationQuaternion = this.tank.barrel.absoluteRotationQuaternion.clone();
     mesh.isVisible = false;
     mesh.parent = this.tank.barrel;
     mesh.rotationQuaternion = Quaternion.Identity();
@@ -76,20 +76,27 @@ export class Shell {
     this.lock.isEnabled = false;
   }
   private onCollide(event: IPhysicsCollisionEvent) {
-    if (!this.isSpent || event.collider.transformNode.name !== this.mesh.name) return;
-    // console.log(event.collidedAgainst.transformNode.name);
+    // If this shell is not part of the collision, ignore
+    if (
+      !this.isSpent ||
+      (event.collider !== this.mesh.physicsBody! && event.collidedAgainst !== this.mesh.physicsBody!)
+    ) {
+      return;
+    }
 
-    const explosionOrigin = this.mesh.absolutePosition.clone();
-    this.dispose();
-
-    if (event.collidedAgainst.transformNode.name !== 'ground') {
-      event.collidedAgainst.applyImpulse(
-        event.collider.transformNode.getDirection(forwardVector).normalize().scale(1),
-        explosionOrigin
+    // Determine which physics body is which, in case two dynamically moving bodies collide
+    const shellCollider = event.collider === this.mesh.physicsBody! ? event.collider : event.collidedAgainst;
+    const otherCollider = event.collider === shellCollider ? event.collidedAgainst : event.collider;
+    if (otherCollider.transformNode.name.includes('Panzer')) {
+      otherCollider.applyImpulse(
+        shellCollider.transformNode.getDirection(forwardVector).normalize().scale(this.impactEnergy),
+        this.mesh.absolutePosition.clone()
       );
     }
+
+    this.dispose();
   }
-  private afterStep() {
+  private beforeStep() {
     if (!this.isSpent) return;
 
     if (
@@ -103,7 +110,8 @@ export class Shell {
   }
   public dispose() {
     this.observers.forEach((observer) => observer.remove());
-    this.mesh.dispose();
+    this.mesh.physicsBody?.dispose();
+    this.mesh?.dispose();
   }
   public fire() {
     this.unlock();

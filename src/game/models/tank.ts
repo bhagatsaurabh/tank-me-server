@@ -1,4 +1,4 @@
-import { Scene, Observer } from '@babylonjs/core';
+import { Observer } from '@babylonjs/core';
 import { Scalar, Vector3, Space, Axis } from '@babylonjs/core/Maths';
 import { AbstractMesh, Mesh, MeshBuilder, TransformNode } from '@babylonjs/core/Meshes';
 import {
@@ -50,7 +50,7 @@ export class Tank {
     loadCooldown: 2500
   };
 
-  player: Player;
+  state: Player;
   body!: TransformNode;
   barrel!: AbstractMesh;
   turret!: AbstractMesh;
@@ -66,11 +66,13 @@ export class Tank {
   private isCanonReady = true;
   private lastFired = 0;
   private observers: Observer<any>[] = [];
+  health: number = 100.0;
 
   private constructor(public world: World, public id: string, rootMesh: AbstractMesh, public spawn: Vector3) {
     this.setTransform(rootMesh);
     this.setPhysics(rootMesh);
-    this.observers.push(world.scene.onAfterStepObservable.add(this.afterStep.bind(this)));
+
+    this.observers.push(world.scene.onBeforeStepObservable.add(this.beforeStep.bind(this)));
   }
   static async create(world: World, id: string, rootMesh: AbstractMesh, spawn: Vector3) {
     const cloned = rootMesh.clone(`${rootMesh.name.replace(':Ref', '')}:${id}`, null) as AbstractMesh;
@@ -321,13 +323,9 @@ export class Tank {
     this.loadedShell = await Shell.create(this);
     this.isCanonReady = true;
   }
-  private afterStep() {
-    this.checkCannon();
-  }
-  private checkCannon() {
+  private beforeStep() {
     const now = performance.now();
-
-    this.player.canFire = now - this.lastFired > Tank.config.cooldown;
+    this.state.canFire = now - this.lastFired > Tank.config.cooldown;
 
     if (!this.isCanonReady && now - this.lastFired > Tank.config.loadCooldown) {
       // Takes few ticks, explicitly setting isCanonReady to prevent multiple loads
@@ -510,7 +508,10 @@ export class Tank {
   }
   public dispose() {
     this.observers.forEach((observer) => observer.remove());
-    this.loadedShell.dispose();
+    this.loadedShell?.dispose();
+    this.turret.physicsBody?.dispose();
+    this.barrel.physicsBody?.dispose();
+    this.axles.forEach((axle) => axle.physicsBody?.dispose());
     this.body.dispose();
   }
 }

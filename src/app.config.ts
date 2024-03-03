@@ -6,11 +6,11 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { static as static_ } from 'express';
 import HavokPhysics, { type HavokPhysicsWithBindings } from '@babylonjs/havok';
+import expressBasicAuth from 'express-basic-auth';
 
 import { GameRoom } from './rooms/GameRoom';
 import { Lobby } from './rooms/Lobby';
 
-// export let havokBinary: Buffer = null;
 export let physicsEngine: HavokPhysicsWithBindings;
 
 export default config({
@@ -24,8 +24,13 @@ export default config({
       app.use('/', playground);
     }
     app.use('/assets', static_('public'));
-    /* Read more: https://docs.colyseus.io/tools/monitor/#restrict-access-to-the-panel-using-a-password */
-    app.use('/colyseus', monitor());
+    const basicAuthMiddleware = expressBasicAuth({
+      users: {
+        admin: 'admin'
+      },
+      challenge: true
+    });
+    app.use('/colyseus', basicAuthMiddleware, monitor());
   },
 
   beforeListen: () => {
