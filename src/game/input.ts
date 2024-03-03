@@ -1,16 +1,19 @@
-import { GameInputType } from '@/types/types';
+import { IMessageTypeInput } from '@/types/interfaces';
+import { GameInputType, PlayerInputs } from '@/types/types';
 
 export class InputManager {
-  keys: Partial<Record<GameInputType, boolean>>;
+  keys: PlayerInputs;
+  seq: number = -1;
 
   constructor() {
     this.keys = {};
   }
 
-  set(keys: Partial<Record<GameInputType, boolean>>) {
-    this.keys = this.validate(keys);
+  set(message: IMessageTypeInput) {
+    this.seq = message.seq;
+    this.keys = this.validate(message.input);
   }
-  validate(keys: Partial<Record<GameInputType, boolean>>): Partial<Record<GameInputType, boolean>> {
+  validate(keys: PlayerInputs): PlayerInputs {
     const validatedKeys = { ...keys };
     Object.keys(validatedKeys).forEach((key: unknown) => {
       if (typeof GameInputType[key as GameInputType] === 'undefined') {

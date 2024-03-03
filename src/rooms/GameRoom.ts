@@ -6,8 +6,9 @@ import { Player, RoomState } from './schema/RoomState';
 import { auth } from '../config/firebase';
 import { World } from '@/game/main';
 import { InputManager } from '@/game/input';
-import { GameInputType, MessageType } from '@/types/types';
+import { GameInputType, MessageType, PlayerInputs } from '@/types/types';
 import { ClientStat } from './ClientStat';
+import { IMessageTypeInput } from '@/types/interfaces';
 
 export class GameRoom extends Room<RoomState> {
   maxClients = 2;
@@ -70,7 +71,7 @@ export class GameRoom extends Room<RoomState> {
   }
 
   setMessageListeners() {
-    this.onMessage(MessageType.INPUT, (client, message: Partial<Record<GameInputType, boolean>>) => {
+    this.onMessage<IMessageTypeInput>(MessageType.INPUT, (client, message: IMessageTypeInput) => {
       if (this.state.status === 'matching') return;
 
       this.clientStats[client.sessionId].ping();

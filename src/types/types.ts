@@ -24,3 +24,5 @@ export enum SpawnAxis {
   PZ = 2,
   NZ = 3
 }
+
+export type PlayerInputs = Partial<Record<GameInputType, boolean>>;
