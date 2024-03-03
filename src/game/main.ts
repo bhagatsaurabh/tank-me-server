@@ -11,7 +11,7 @@ import { Ground } from './models/ground';
 import { GameInputType, MessageType, SpawnAxis } from '@/types/types';
 import { spawnAxes } from './constants';
 import { GameRoom } from '@/rooms/GameRoom';
-import { IMessageFire } from '@/types/interfaces';
+import { IMessageTypeFire } from '@/types/interfaces';
 import { physicsEngine } from '@/app.config';
 
 export class World {
@@ -162,7 +162,7 @@ export class World {
       }
       if (input.keys[GameInputType.FIRE]) {
         if (this.players[player.sid].fire()) {
-          this.room.broadcastEvent<IMessageFire>(MessageType.ENEMY_FIRE, { id: player.sid }, player.sid);
+          this.room.broadcastEvent<IMessageTypeFire>(MessageType.ENEMY_FIRE, { id: player.sid }, player.sid);
         }
       }
 
