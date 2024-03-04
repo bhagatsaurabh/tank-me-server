@@ -1,11 +1,12 @@
 import type { PlayerInputs } from './types';
 
-export interface IMessageTypeInput {
+export interface IMessageInput {
   seq: number;
+  timestamp: number;
   input: PlayerInputs;
 }
 
-export interface IMessageTypeFire {
+export interface IMessageFire {
   id: string;
 }
-export interface IMessageTypeLoad {}
+export interface IMessageLoad {}

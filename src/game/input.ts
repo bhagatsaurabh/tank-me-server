@@ -1,25 +1,31 @@
-import { IMessageTypeInput } from '@/types/interfaces';
-import { GameInputType, PlayerInputs } from '@/types/types';
+import { IMessageInput } from '@/types/interfaces';
+import { GameInputType } from '@/types/types';
+import { Queue } from './utils/queue';
+import { Nullable } from '@babylonjs/core';
 
 export class InputManager {
-  keys: PlayerInputs;
-  seq: number = -1;
+  private buffer: Queue<IMessageInput>;
 
   constructor() {
-    this.keys = {};
+    this.buffer = new Queue([]);
   }
 
-  set(message: IMessageTypeInput) {
-    this.seq = message.seq;
-    this.keys = this.validate(message.input);
+  queue(message: IMessageInput, avgPing: number) {
+    this.buffer.push(this.validate(message, avgPing));
   }
-  validate(keys: PlayerInputs): PlayerInputs {
-    const validatedKeys = { ...keys };
+  get(): Nullable<IMessageInput> {
+    return this.buffer.pop();
+  }
+  private validate(message: IMessageInput, avgPing: number): IMessageInput {
+    const validatedKeys = { ...message.input };
     Object.keys(validatedKeys).forEach((key: unknown) => {
       if (typeof GameInputType[key as GameInputType] === 'undefined') {
         delete validatedKeys[key as GameInputType];
       }
     });
-    return validatedKeys;
+
+    message.input = validatedKeys;
+    message.timestamp = performance.now() - avgPing;
+    return message;
   }
 }

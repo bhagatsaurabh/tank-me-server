@@ -6,9 +6,9 @@ import { Player, RoomState } from './schema/RoomState';
 import { auth } from '../config/firebase';
 import { World } from '@/game/main';
 import { InputManager } from '@/game/input';
-import { GameInputType, MessageType, PlayerInputs } from '@/types/types';
+import { MessageType } from '@/types/types';
 import { ClientStat } from './ClientStat';
-import { IMessageTypeInput } from '@/types/interfaces';
+import { IMessageInput } from '@/types/interfaces';
 
 export class GameRoom extends Room<RoomState> {
   maxClients = 2;
@@ -19,7 +19,6 @@ export class GameRoom extends Room<RoomState> {
 
   async onCreate(_options: any) {
     this.world = await World.create(this);
-    this.setSimulationInterval(() => this.update());
     this.setState(new RoomState());
     this.setMessageListeners();
     this.setPatchRate(16.6);
@@ -71,17 +70,12 @@ export class GameRoom extends Room<RoomState> {
   }
 
   setMessageListeners() {
-    this.onMessage<IMessageTypeInput>(MessageType.INPUT, (client, message: IMessageTypeInput) => {
+    this.onMessage<IMessageInput>(MessageType.INPUT, (client, message: IMessageInput) => {
       if (this.state.status === 'matching') return;
 
       this.clientStats[client.sessionId].ping();
-      this.inputs[client.sessionId].set(message);
+      this.inputs[client.sessionId].queue(message, this.clientStats[client.sessionId].avgPing);
     });
-  }
-  update() {
-    Object.keys(this.world.players).forEach((key) =>
-      this.state.players.get(key)?.update(this.world.players[key])
-    );
   }
   broadcastEvent<T>(type: MessageType, message: T, originatorId: string) {
     this.broadcast(type, message, { except: this.clients.find((c) => c.sessionId === originatorId) });

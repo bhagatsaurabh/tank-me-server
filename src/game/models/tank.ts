@@ -14,10 +14,10 @@ import {
 } from '@babylonjs/core/Physics';
 
 import { Shell } from './shell';
-import { avg, clamp } from '@/game/utils';
+import { avg, clamp } from '@/game/utils/utils';
 import { Player } from '@/rooms/schema/RoomState';
 import { World } from '../main';
-import { IMessageTypeLoad } from '@/types/interfaces';
+import { IMessageLoad } from '@/types/interfaces';
 import { MessageType } from '@/types/types';
 
 export class Tank {
@@ -318,7 +318,7 @@ export class Tank {
   private async loadCannon(init: boolean = false) {
     if (!init) {
       // Play load sound on original client
-      this.world.room.sendEvent<IMessageTypeLoad>(MessageType.LOAD, {}, this.id);
+      this.world.room.sendEvent<IMessageLoad>(MessageType.LOAD, {}, this.id);
     }
     this.loadedShell = await Shell.create(this);
     this.isCanonReady = true;
