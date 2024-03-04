@@ -11,8 +11,8 @@ import {
 import { Observer } from '@babylonjs/core/Misc';
 
 import type { Tank } from './tank';
-import { forwardVector } from '@/game/utils';
-import { luid } from '../utils';
+import { forwardVector } from '@/game/utils/utils';
+import { luid } from '../utils/utils';
 
 export class Shell {
   private static refShell: Mesh;

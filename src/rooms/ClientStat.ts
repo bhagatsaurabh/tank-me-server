@@ -1,4 +1,4 @@
-import { avg } from '@/game/utils';
+import { avg } from '@/game/utils/utils';
 
 export class ClientStat {
   private pings: number[] = [];

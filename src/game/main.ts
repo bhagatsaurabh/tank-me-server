@@ -5,13 +5,13 @@ import { AbstractMesh, MeshBuilder, TransformNode } from '@babylonjs/core/Meshes
 import { PBRMaterial } from '@babylonjs/core/Materials';
 import { HavokPlugin, PhysicsAggregate, PhysicsShapeType } from '@babylonjs/core/Physics';
 
-import { choose, gravityVector, randInRange, throttle } from '@/game/utils';
+import { choose, gravityVector, randInRange, throttle } from '@/game/utils/utils';
 import { Tank } from './models/tank';
 import { Ground } from './models/ground';
 import { GameInputType, MessageType, SpawnAxis } from '@/types/types';
 import { spawnAxes } from './constants';
 import { GameRoom } from '@/rooms/GameRoom';
-import { IMessageTypeFire } from '@/types/interfaces';
+import { IMessageFire, IMessageInput } from '@/types/interfaces';
 import { physicsEngine } from '@/app.config';
 
 export class World {
@@ -78,6 +78,7 @@ export class World {
     this.setCamera();
 
     this.observers.push(this.scene.onBeforeStepObservable.add(this.beforeStep.bind(this)));
+    this.observers.push(this.scene.onAfterStepObservable.add(this.afterStep.bind(this)));
   }
   private setCamera() {
     this.camera = new FreeCamera('default', new Vector3(245, 245, 245), this.scene, true);
@@ -107,33 +108,38 @@ export class World {
     new PhysicsAggregate(barrier3, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
     new PhysicsAggregate(barrier4, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
   }
+  private lastProcessedInputs: Record<string, IMessageInput> = {};
   private beforeStep() {
     this.room.state.players.forEach((player) => {
-      const input = this.room.inputs[player.sid];
+      // 1. Get input from queued messages
+      const message = this.room.inputs[player.sid].get();
+      if (!message) return;
 
+      // 2. Process input
+      const input = message.input;
       let isMoving = false;
-      const turningDirection = input.keys[GameInputType.LEFT] ? -1 : input.keys[GameInputType.RIGHT] ? 1 : 0;
-      const isAccelerating = input.keys[GameInputType.FORWARD] || input.keys[GameInputType.REVERSE];
-      const isTurretMoving = input.keys[GameInputType.TURRET_LEFT] || input.keys[GameInputType.TURRET_RIGHT];
-      const isBarrelMoving = input.keys[GameInputType.BARREL_UP] || input.keys[GameInputType.BARREL_DOWN];
+      const turningDirection = input[GameInputType.LEFT] ? -1 : input[GameInputType.RIGHT] ? 1 : 0;
+      const isAccelerating = input[GameInputType.FORWARD] || input[GameInputType.REVERSE];
+      const isTurretMoving = input[GameInputType.TURRET_LEFT] || input[GameInputType.TURRET_RIGHT];
+      const isBarrelMoving = input[GameInputType.BARREL_UP] || input[GameInputType.BARREL_DOWN];
 
-      if (input.keys[GameInputType.FORWARD]) {
+      if (input[GameInputType.FORWARD]) {
         this.players[player.sid].accelerate(World.deltaTime, turningDirection);
         isMoving = true;
       }
-      if (input.keys[GameInputType.REVERSE]) {
+      if (input[GameInputType.REVERSE]) {
         this.players[player.sid].reverse(World.deltaTime, turningDirection);
         isMoving = true;
       }
-      if (input.keys[GameInputType.LEFT]) {
+      if (input[GameInputType.LEFT]) {
         this.players[player.sid].left(World.deltaTime, isAccelerating);
         isMoving = true;
       }
-      if (input.keys[GameInputType.RIGHT]) {
+      if (input[GameInputType.RIGHT]) {
         this.players[player.sid].right(World.deltaTime, isAccelerating);
         isMoving = true;
       }
-      if (input.keys[GameInputType.BRAKE]) {
+      if (input[GameInputType.BRAKE]) {
         this.players[player.sid].brake(World.deltaTime);
       }
       if (!isMoving) {
@@ -145,29 +151,35 @@ export class World {
       if (!isBarrelMoving) {
         this.players[player.sid].stopBarrel();
       }
-      if (input.keys[GameInputType.TURRET_LEFT]) {
+      if (input[GameInputType.TURRET_LEFT]) {
         this.players[player.sid].turretLeft(World.deltaTime);
       }
-      if (input.keys[GameInputType.TURRET_RIGHT]) {
+      if (input[GameInputType.TURRET_RIGHT]) {
         this.players[player.sid].turretRight(World.deltaTime);
       }
-      if (input.keys[GameInputType.BARREL_UP]) {
+      if (input[GameInputType.BARREL_UP]) {
         this.players[player.sid].barrelUp(World.deltaTime);
       }
-      if (input.keys[GameInputType.BARREL_DOWN]) {
+      if (input[GameInputType.BARREL_DOWN]) {
         this.players[player.sid].barrelDown(World.deltaTime);
       }
-      if (input.keys[GameInputType.RESET] && !isTurretMoving && !isBarrelMoving) {
+      if (input[GameInputType.RESET] && !isTurretMoving && !isBarrelMoving) {
         this.players[player.sid].resetTurret(World.deltaTime);
       }
-      if (input.keys[GameInputType.FIRE]) {
+      if (input[GameInputType.FIRE]) {
         if (this.players[player.sid].fire()) {
-          this.room.broadcastEvent<IMessageTypeFire>(MessageType.ENEMY_FIRE, { id: player.sid }, player.sid);
+          this.room.broadcastEvent<IMessageFire>(MessageType.ENEMY_FIRE, { id: player.sid }, player.sid);
         }
       }
-
       this.players[player.sid].checkStuck();
+      this.lastProcessedInputs[player.sid] = message;
     });
+  }
+  private afterStep() {
+    // 3. Update state
+    this.room.state.players.forEach((player) =>
+      player.update(this.players[player.sid], this.lastProcessedInputs[player.sid])
+    );
   }
   private start() {
     this.engine.runRenderLoop(this.render.bind(this));
