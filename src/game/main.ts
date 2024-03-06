@@ -177,8 +177,10 @@ export class World {
   }
   private afterStep() {
     // 3. Update state
-    this.room.state.players.forEach((player) =>
-      player.update(this.players[player.sid], this.lastProcessedInputs[player.sid])
+    this.room.state.players.forEach(
+      (player) =>
+        this.lastProcessedInputs[player.sid] &&
+        player.update(this.players[player.sid], this.lastProcessedInputs[player.sid])
     );
   }
   private start() {
