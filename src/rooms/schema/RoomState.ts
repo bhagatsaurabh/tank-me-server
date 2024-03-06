@@ -112,11 +112,11 @@ export class Player extends Schema {
     this.leftSpeed = tank.leftSpeed;
     this.rightSpeed = tank.rightSpeed;
     this.health = tank.health;
-    this.position.update(tank.body.position);
-    this.rotation.update(tank.body.rotationQuaternion);
-    this.barrelRotation.update(tank.barrel.rotationQuaternion);
-    this.turretRotation.update(tank.turret.rotationQuaternion);
-    this.lastProcessedInput.update(lastProcessedInput);
+    this.position = new Position(tank.body.position);
+    this.rotation = new Rotation(tank.body.rotationQuaternion);
+    this.barrelRotation = new BarrelRotation(tank.barrel.rotationQuaternion);
+    this.turretRotation = new TurretRotation(tank.turret.rotationQuaternion);
+    this.lastProcessedInput = new LastProcessedInput(lastProcessedInput);
   }
 }
 

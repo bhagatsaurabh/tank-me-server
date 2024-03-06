@@ -4,7 +4,7 @@ import { Queue } from './utils/queue';
 import { Nullable } from '@babylonjs/core';
 
 export class InputManager {
-  private buffer: Queue<IMessageInput>;
+  buffer: Queue<IMessageInput>;
 
   constructor() {
     this.buffer = new Queue([]);

@@ -7,18 +7,18 @@ import { auth } from '../config/firebase';
 import { World } from '@/game/main';
 import { InputManager } from '@/game/input';
 import { MessageType } from '@/types/types';
-import { ClientStat } from './ClientStat';
 import { IMessageInput } from '@/types/interfaces';
+import { Monitor } from '@/monitor/monitor';
 
 export class GameRoom extends Room<RoomState> {
   maxClients = 2;
   inputs: Record<string, InputManager> = {};
   world: World;
-  clientStats: Record<string, ClientStat> = {};
-  statHandle: NodeJS.Timeout;
+  monitor: Monitor;
 
   async onCreate(_options: any) {
     this.world = await World.create(this);
+    this.monitor = new Monitor(this);
     this.setState(new RoomState());
     this.setMessageListeners();
     this.setPatchRate(16.6);
@@ -35,23 +35,12 @@ export class GameRoom extends Room<RoomState> {
 
     this.state.players.set(client.sessionId, player);
     this.inputs[client.sessionId] = new InputManager();
-    this.clientStats[client.sessionId] = new ClientStat(client.sessionId);
+    this.monitor.addClient(client.sessionId);
     console.log(client.sessionId, 'joined!');
 
     if (this.state.players.size === this.maxClients) {
       this.state.status = 'ready';
-
-      // #Debug Start
-      this.statHandle = setInterval(
-        () =>
-          console.log(
-            Object.entries(this.clientStats)
-              .map(([id, stat]) => `${id}: ${stat.avgPing}`)
-              .join(', ')
-          ),
-        1000
-      );
-      // #Debug End
+      this.monitor.start(true);
     }
   }
   onLeave(client: Client, _consented: boolean) {
@@ -64,7 +53,7 @@ export class GameRoom extends Room<RoomState> {
     }
   }
   onDispose() {
-    clearTimeout(this.statHandle);
+    this.monitor.stop();
     this.world.destroy();
     console.log('Room', this.roomId, 'disposed');
   }
@@ -73,8 +62,8 @@ export class GameRoom extends Room<RoomState> {
     this.onMessage<IMessageInput>(MessageType.INPUT, (client, message: IMessageInput) => {
       if (this.state.status === 'matching') return;
 
-      this.clientStats[client.sessionId].ping();
-      this.inputs[client.sessionId].queue(message, this.clientStats[client.sessionId].avgPing);
+      this.monitor.clientPing(client.sessionId);
+      this.inputs[client.sessionId].queue(message, this.monitor.getAvgPing(client.sessionId));
     });
   }
   broadcastEvent<T>(type: MessageType, message: T, originatorId: string) {
