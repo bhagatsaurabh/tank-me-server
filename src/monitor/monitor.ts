@@ -33,9 +33,9 @@ export class Monitor {
               ([id, stat]) =>
                 `[ID: ${id}, Ping: ${stat.avgPing.toFixed(2)}, InBuffer: ${
                   this.room.inputs[id].buffer.length
-                }`
+                }, Seq: ${this.room.inputs[id].buffer.seekLast()?.seq}]`
             )
-            .join('\n')
+            .join(', ')
         ),
       this._logInterval
     );

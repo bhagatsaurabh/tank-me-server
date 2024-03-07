@@ -1,7 +1,6 @@
 import { IMessageInput } from '@/types/interfaces';
 import { GameInputType } from '@/types/types';
 import { Queue } from './utils/queue';
-import { Nullable } from '@babylonjs/core';
 
 export class InputManager {
   buffer: Queue<IMessageInput>;
@@ -13,8 +12,11 @@ export class InputManager {
   queue(message: IMessageInput, avgPing: number) {
     this.buffer.push(this.validate(message, avgPing));
   }
-  get(): Nullable<IMessageInput> {
-    return this.buffer.pop();
+  getAll(): IMessageInput[] {
+    const messages: IMessageInput[] = [];
+    this.buffer.forEach((message) => messages.push(message));
+    this.buffer.clear();
+    return messages;
   }
   private validate(message: IMessageInput, avgPing: number): IMessageInput {
     const validatedKeys = { ...message.input };
