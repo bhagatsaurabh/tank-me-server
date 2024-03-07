@@ -5,19 +5,19 @@ import { AbstractMesh, MeshBuilder, TransformNode } from '@babylonjs/core/Meshes
 import { PBRMaterial } from '@babylonjs/core/Materials';
 import { HavokPlugin, PhysicsAggregate, PhysicsShapeType } from '@babylonjs/core/Physics';
 
-import { choose, gravityVector, randInRange, throttle } from '@/game/utils/utils';
+import { choose, gravityVector, randInRange } from '@/game/utils/utils';
 import { Tank } from './models/tank';
 import { Ground } from './models/ground';
-import { GameInputType, MessageType, SpawnAxis } from '@/types/types';
+import { SpawnAxis } from '@/types/types';
 import { spawnAxes } from './constants';
 import { GameRoom } from '@/rooms/GameRoom';
-import { IMessageFire, IMessageInput } from '@/types/interfaces';
+import { IMessageInput } from '@/types/interfaces';
 import { physicsEngine } from '@/app.config';
 
 export class World {
   private static timeStep = 1 / 60;
   private static subTimeStep = 16;
-  private static deltaTime = World.timeStep;
+  static deltaTime = World.timeStep;
 
   private tankMeshes: AbstractMesh[] = [];
   private observers: Observer<Scene>[] = [];
@@ -26,7 +26,6 @@ export class World {
   physicsPlugin: HavokPlugin;
   scene: Scene;
   players: Record<string, Tank> = {};
-  // private debugDeltaTime = throttle((d) => console.log(d, World.deltaTime), 1000);
 
   private constructor(public engine: NullEngine, public room: GameRoom) {
     this.scene = new Scene(this.engine);
@@ -111,68 +110,14 @@ export class World {
   private lastProcessedInputs: Record<string, IMessageInput> = {};
   private beforeStep() {
     this.room.state.players.forEach((player) => {
-      // 1. Get input from queued messages
-      const message = this.room.inputs[player.sid].get();
-      if (!message) return;
+      // 1. Get inputs from queued messages
+      const messages = this.room.inputs[player.sid].getAll();
 
-      // 2. Process input
-      const input = message.input;
-      let isMoving = false;
-      const turningDirection = input[GameInputType.LEFT] ? -1 : input[GameInputType.RIGHT] ? 1 : 0;
-      const isAccelerating = input[GameInputType.FORWARD] || input[GameInputType.REVERSE];
-      const isTurretMoving = input[GameInputType.TURRET_LEFT] || input[GameInputType.TURRET_RIGHT];
-      const isBarrelMoving = input[GameInputType.BARREL_UP] || input[GameInputType.BARREL_DOWN];
-
-      if (input[GameInputType.FORWARD]) {
-        this.players[player.sid].accelerate(World.deltaTime, turningDirection);
-        isMoving = true;
-      }
-      if (input[GameInputType.REVERSE]) {
-        this.players[player.sid].reverse(World.deltaTime, turningDirection);
-        isMoving = true;
-      }
-      if (input[GameInputType.LEFT]) {
-        this.players[player.sid].left(World.deltaTime, isAccelerating);
-        isMoving = true;
-      }
-      if (input[GameInputType.RIGHT]) {
-        this.players[player.sid].right(World.deltaTime, isAccelerating);
-        isMoving = true;
-      }
-      if (input[GameInputType.BRAKE]) {
-        this.players[player.sid].brake(World.deltaTime);
-      }
-      if (!isMoving) {
-        this.players[player.sid].decelerate(World.deltaTime);
-      }
-      if (!isTurretMoving) {
-        this.players[player.sid].stopTurret();
-      }
-      if (!isBarrelMoving) {
-        this.players[player.sid].stopBarrel();
-      }
-      if (input[GameInputType.TURRET_LEFT]) {
-        this.players[player.sid].turretLeft(World.deltaTime);
-      }
-      if (input[GameInputType.TURRET_RIGHT]) {
-        this.players[player.sid].turretRight(World.deltaTime);
-      }
-      if (input[GameInputType.BARREL_UP]) {
-        this.players[player.sid].barrelUp(World.deltaTime);
-      }
-      if (input[GameInputType.BARREL_DOWN]) {
-        this.players[player.sid].barrelDown(World.deltaTime);
-      }
-      if (input[GameInputType.RESET] && !isTurretMoving && !isBarrelMoving) {
-        this.players[player.sid].resetTurret(World.deltaTime);
-      }
-      if (input[GameInputType.FIRE]) {
-        if (this.players[player.sid].fire()) {
-          this.room.broadcastEvent<IMessageFire>(MessageType.ENEMY_FIRE, { id: player.sid }, player.sid);
-        }
-      }
-      this.players[player.sid].checkStuck();
-      this.lastProcessedInputs[player.sid] = message;
+      // 2. Process inputs
+      messages
+        .map((message) => message.input)
+        .forEach((input) => this.players[player.sid].applyInputs(input));
+      this.lastProcessedInputs[player.sid] = messages[messages.length - 1];
     });
   }
   private afterStep() {

@@ -17,8 +17,8 @@ import { Shell } from './shell';
 import { avg, clamp } from '@/game/utils/utils';
 import { Player } from '@/rooms/schema/RoomState';
 import { World } from '../main';
-import { IMessageLoad } from '@/types/interfaces';
-import { MessageType } from '@/types/types';
+import { IMessageFire, IMessageLoad } from '@/types/interfaces';
+import { GameInputType, MessageType, PlayerInputs } from '@/types/types';
 
 export class Tank {
   private static config = {
@@ -346,7 +346,68 @@ export class Tank {
     this.body.physicsBody!.applyImpulse(recoilVector, contactPoint);
   }
 
-  public accelerate(dt: number, turningDirection: -1 | 0 | 1) {
+  public applyInputs(input: PlayerInputs) {
+    let isMoving = false;
+    const turningDirection = input[GameInputType.LEFT] ? -1 : input[GameInputType.RIGHT] ? 1 : 0;
+    const isAccelerating = input[GameInputType.FORWARD] || input[GameInputType.REVERSE];
+    const isTurretMoving = input[GameInputType.TURRET_LEFT] || input[GameInputType.TURRET_RIGHT];
+    const isBarrelMoving = input[GameInputType.BARREL_UP] || input[GameInputType.BARREL_DOWN];
+
+    if (input[GameInputType.FORWARD]) {
+      this.accelerate(World.deltaTime, turningDirection);
+      isMoving = true;
+    }
+    if (input[GameInputType.REVERSE]) {
+      this.reverse(World.deltaTime, turningDirection);
+      isMoving = true;
+    }
+    if (input[GameInputType.LEFT]) {
+      this.left(World.deltaTime, isAccelerating);
+      isMoving = true;
+    }
+    if (input[GameInputType.RIGHT]) {
+      this.right(World.deltaTime, isAccelerating);
+      isMoving = true;
+    }
+    if (input[GameInputType.BRAKE]) {
+      this.brake(World.deltaTime);
+    }
+    if (!isMoving) {
+      this.decelerate(World.deltaTime);
+    }
+    if (!isTurretMoving) {
+      this.stopTurret();
+    }
+    if (!isBarrelMoving) {
+      this.stopBarrel();
+    }
+    if (input[GameInputType.TURRET_LEFT]) {
+      this.turretLeft(World.deltaTime);
+    }
+    if (input[GameInputType.TURRET_RIGHT]) {
+      this.turretRight(World.deltaTime);
+    }
+    if (input[GameInputType.BARREL_UP]) {
+      this.barrelUp(World.deltaTime);
+    }
+    if (input[GameInputType.BARREL_DOWN]) {
+      this.barrelDown(World.deltaTime);
+    }
+    if (input[GameInputType.RESET] && !isTurretMoving && !isBarrelMoving) {
+      this.resetTurret(World.deltaTime);
+    }
+    if (input[GameInputType.FIRE]) {
+      if (this.fire()) {
+        this.world.room.broadcastEvent<IMessageFire>(
+          MessageType.ENEMY_FIRE,
+          { id: this.state.sid },
+          this.state.sid
+        );
+      }
+    }
+    this.checkStuck();
+  }
+  private accelerate(dt: number, turningDirection: -1 | 0 | 1) {
     if (turningDirection !== -1) {
       this.leftSpeed = clamp(
         this.leftSpeed + dt * Tank.config.speedModifier,
@@ -366,7 +427,7 @@ export class Tank {
       motor.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, idx < 5 ? this.leftSpeed : this.rightSpeed);
     });
   }
-  public reverse(dt: number, turningDirection: -1 | 0 | 1) {
+  private reverse(dt: number, turningDirection: -1 | 0 | 1) {
     if (turningDirection !== -1) {
       this.leftSpeed = clamp(
         this.leftSpeed - dt * Tank.config.speedModifier,
@@ -386,7 +447,7 @@ export class Tank {
       motor.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, idx < 5 ? this.leftSpeed : this.rightSpeed);
     });
   }
-  public left(dt: number, isAccelerating: boolean) {
+  private left(dt: number, isAccelerating: boolean) {
     if (!isAccelerating) {
       // If not accelerating, even-out speeds to prevent sudden halt
       this.leftSpeed = clamp(
@@ -410,7 +471,7 @@ export class Tank {
       motor.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, idx < 5 ? this.leftSpeed : this.rightSpeed);
     });
   }
-  public right(dt: number, isAccelerating: boolean) {
+  private right(dt: number, isAccelerating: boolean) {
     if (!isAccelerating) {
       // If not accelerating, even out speeds
       this.leftSpeed = clamp(
@@ -434,10 +495,10 @@ export class Tank {
       motor.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, idx < 5 ? this.leftSpeed : this.rightSpeed)
     );
   }
-  public brake(dt: number) {
+  private brake(dt: number) {
     this.decelerate(dt, Tank.config.speedModifier);
   }
-  public decelerate(dt: number, modifier: number = Tank.config.decelerationModifier) {
+  private decelerate(dt: number, modifier: number = Tank.config.decelerationModifier) {
     let speed = 0;
     if (this.leftSpeed < 0.001 && this.rightSpeed < 0.001) {
       this.leftSpeed = this.rightSpeed = 0;
@@ -459,25 +520,25 @@ export class Tank {
 
     this.axleMotors.forEach((motor) => motor.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, speed));
   }
-  public turretLeft(dt: number) {
+  private turretLeft(dt: number) {
     this.turretMotor.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_Y, -dt * Tank.config.maxTurretSpeed);
   }
-  public turretRight(dt: number) {
+  private turretRight(dt: number) {
     this.turretMotor.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_Y, dt * Tank.config.maxTurretSpeed);
   }
-  public stopTurret() {
+  private stopTurret() {
     this.turretMotor.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_Y, 0);
   }
-  public barrelUp(dt: number) {
+  private barrelUp(dt: number) {
     this.barrelMotor.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, -dt * Tank.config.maxBarrelSpeed);
   }
-  public barrelDown(dt: number) {
+  private barrelDown(dt: number) {
     this.barrelMotor.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, dt * Tank.config.maxBarrelSpeed);
   }
-  public stopBarrel() {
+  private stopBarrel() {
     this.barrelMotor.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, 0);
   }
-  public resetTurret(dt: number) {
+  private resetTurret(dt: number) {
     const turretEuler = this.turret.rotationQuaternion!.toEulerAngles();
     const barrelEuler = this.barrel.rotationQuaternion!.toEulerAngles();
 
@@ -488,7 +549,7 @@ export class Tank {
       barrelEuler.x < 0 ? this.barrelDown(dt) : this.barrelUp(dt);
     }
   }
-  public fire() {
+  private fire() {
     const now = performance.now();
     if (now - this.lastFired <= Tank.config.cooldown) return false;
 
