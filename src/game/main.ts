@@ -3,7 +3,7 @@ import { SceneLoader } from '@babylonjs/core/Loading';
 import { Axis, Space, Vector3 } from '@babylonjs/core/Maths';
 import { AbstractMesh, MeshBuilder, TransformNode } from '@babylonjs/core/Meshes';
 import { PBRMaterial } from '@babylonjs/core/Materials';
-import { HavokPlugin, PhysicsAggregate, PhysicsShapeType } from '@babylonjs/core/Physics';
+import { HavokPlugin, PhysicsAggregate, PhysicsBody, PhysicsShapeType } from '@babylonjs/core/Physics';
 
 import { choose, gravityVector, randInRange } from '@/game/utils/utils';
 import { Tank } from './models/tank';
@@ -11,8 +11,9 @@ import { Ground } from './models/ground';
 import { SpawnAxis } from '@/types/types';
 import { spawnAxes } from './constants';
 import { GameRoom } from '@/rooms/GameRoom';
-import { IMessageInput } from '@/types/interfaces';
 import { physicsEngine } from '@/app.config';
+import { Player } from '@/rooms/schema/RoomState';
+import { IMessageInput } from '@/types/interfaces';
 
 export class World {
   private static timeStep = 1 / 60;
@@ -26,6 +27,7 @@ export class World {
   physicsPlugin: HavokPlugin;
   scene: Scene;
   players: Record<string, Tank> = {};
+  physicsBodies: PhysicsBody[] = [];
 
   private constructor(public engine: NullEngine, public room: GameRoom) {
     this.scene = new Scene(this.engine);
@@ -77,7 +79,6 @@ export class World {
     this.setCamera();
 
     this.observers.push(this.scene.onBeforeStepObservable.add(this.beforeStep.bind(this)));
-    this.observers.push(this.scene.onAfterStepObservable.add(this.afterStep.bind(this)));
   }
   private setCamera() {
     this.camera = new FreeCamera('default', new Vector3(245, 245, 245), this.scene, true);
@@ -107,28 +108,55 @@ export class World {
     new PhysicsAggregate(barrier3, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
     new PhysicsAggregate(barrier4, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
   }
-  private lastProcessedInputs: Record<string, IMessageInput> = {};
   private beforeStep() {
-    this.room.state.players.forEach((player) => {
+    // Approach 1: Isolated update
+    /* this.room.state.players.forEach((player) => {
       // 1. Get inputs from queued messages
       const messages = this.room.inputs[player.sid].getAll();
 
       // 2. Process inputs
       messages
         .map((message) => message.input)
-        .forEach((input) => this.players[player.sid].applyInputs(input));
-      this.lastProcessedInputs[player.sid] = messages[messages.length - 1];
+        .forEach((input) => {
+          this.players[player.sid].applyInputs(input);
+          this.physicsPlugin.executeStep(World.deltaTime, this.players[player.sid].physicsBodies);
+        });
+
+      // 3. Update state
+      if (messages[messages.length - 1]) {
+        player.update(this.players[player.sid], messages[messages.length - 1]);
+      }
     });
-  }
-  private afterStep() {
+    this.room.state.step = this.scene.getStepId(); */
+
+    // Approach 2: Interlaced update
+    const players: Player[] = [];
+    const playerMessages: IMessageInput[][] = [];
+
+    // 1. Get inputs from queued messages
+    this.room.state.players.forEach((player) => {
+      players.push(player);
+      playerMessages.push(this.room.inputs[player.sid].getAll());
+    });
+
+    // 2. Process inputs
+    for (let i = 0; i < Math.max(...playerMessages.map((messages) => messages.length)); i += 1) {
+      players.forEach((player, idx) => {
+        playerMessages[idx][i]?.input && this.players[player.sid].applyInputs(playerMessages[idx][i].input);
+      });
+      this.physicsPlugin.executeStep(World.deltaTime, this.physicsBodies);
+    }
+
     // 3. Update state
-    this.room.state.players.forEach(
-      (player) =>
-        this.lastProcessedInputs[player.sid] &&
-        player.update(this.players[player.sid], this.lastProcessedInputs[player.sid])
-    );
+    players.forEach((player, idx) => {
+      if (playerMessages[idx][playerMessages[idx].length - 1]) {
+        player.update(this.players[player.sid], playerMessages[idx][playerMessages[idx].length - 1]);
+      }
+    });
+    this.room.state.step = this.scene.getStepId();
   }
   private start() {
+    Object.values(this.players).forEach((player) => this.physicsBodies.push(...player.physicsBodies));
     this.engine.runRenderLoop(this.render.bind(this));
     this.physicsPlugin.setTimeStep(World.timeStep);
   }

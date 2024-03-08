@@ -67,6 +67,7 @@ export class Tank {
   private lastFired = 0;
   private observers: Observer<any>[] = [];
   health: number = 100.0;
+  physicsBodies: PhysicsBody[] = [];
 
   private constructor(public world: World, public id: string, rootMesh: AbstractMesh, public spawn: Vector3) {
     this.setTransform(rootMesh);
@@ -194,6 +195,8 @@ export class Tank {
       );
       this.axles.push(axle);
     }
+
+    this.physicsBodies.push(bodyPB, turretPB, barrelPB, ...this.axles.map((axle) => axle.physicsBody!));
   }
   private createWheelConstraint(
     pivotA: Vector3,

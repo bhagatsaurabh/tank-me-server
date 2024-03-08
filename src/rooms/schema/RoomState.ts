@@ -121,6 +121,7 @@ export class Player extends Schema {
 }
 
 export class RoomState extends Schema {
-  @type({ map: Player }) players = new MapSchema<Player>();
   @type('string') status: string;
+  @type('number') step: number;
+  @type({ map: Player }) players = new MapSchema<Player>();
 }
