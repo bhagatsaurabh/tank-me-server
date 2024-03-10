@@ -70,7 +70,7 @@ export class TurretRotation extends Schema {
   }
 }
 export class LastProcessedInput extends Schema {
-  @type('number') seq: number;
+  @type('number') step: number;
   @type('number') timestamp: number;
 
   constructor(message: IMessageInput) {
@@ -78,7 +78,7 @@ export class LastProcessedInput extends Schema {
     this.update(message);
   }
   update(message: IMessageInput) {
-    this.seq = message.seq;
+    this.step = message.step;
     this.timestamp = message.timestamp;
   }
 }
@@ -105,7 +105,7 @@ export class Player extends Schema {
     this.rotation = new Rotation(tank.body.rotationQuaternion);
     this.barrelRotation = new BarrelRotation(tank.barrel.rotationQuaternion);
     this.turretRotation = new TurretRotation(tank.turret.rotationQuaternion);
-    this.lastProcessedInput = new LastProcessedInput({ seq: -1, timestamp: 0, input: null });
+    this.lastProcessedInput = new LastProcessedInput({ step: -1, timestamp: 0, input: null });
   }
 
   update(tank: Tank, lastProcessedInput: IMessageInput) {
@@ -122,6 +122,5 @@ export class Player extends Schema {
 
 export class RoomState extends Schema {
   @type('string') status: string;
-  @type('number') step: number;
   @type({ map: Player }) players = new MapSchema<Player>();
 }

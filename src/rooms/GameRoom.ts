@@ -11,7 +11,7 @@ import { IMessageInput } from '@/types/interfaces';
 import { Monitor } from '@/monitor/monitor';
 
 export class GameRoom extends Room<RoomState> {
-  maxClients = 2;
+  maxClients = 1;
   inputs: Record<string, InputManager> = {};
   world: World;
   monitor: Monitor;
@@ -21,7 +21,13 @@ export class GameRoom extends Room<RoomState> {
     this.monitor = new Monitor(this);
     this.setState(new RoomState());
     this.setMessageListeners();
-    this.setPatchRate(16.6);
+    this.setSimulationInterval(() => {
+      this.state.players.forEach((player) => {
+        if (this.world.lastProcessedInput[player.sid]) {
+          player.update(this.world.players[player.sid], this.world.lastProcessedInput[player.sid]);
+        }
+      });
+    }, 16.66);
 
     console.log('Room', this.roomId, 'created!');
   }
