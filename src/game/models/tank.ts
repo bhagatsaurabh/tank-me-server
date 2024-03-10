@@ -503,7 +503,7 @@ export class Tank {
   }
   private decelerate(dt: number, modifier: number = Tank.config.decelerationModifier) {
     let speed = 0;
-    if (this.leftSpeed < 0.001 && this.rightSpeed < 0.001) {
+    if (Math.abs(this.leftSpeed) < 0.001 && Math.abs(this.rightSpeed) < 0.001) {
       this.leftSpeed = this.rightSpeed = 0;
       speed = 0;
     } else {

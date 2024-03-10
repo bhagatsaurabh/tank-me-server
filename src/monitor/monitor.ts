@@ -33,7 +33,7 @@ export class Monitor {
               ([id, stat]) =>
                 `[ID: ${id}, Ping: ${stat.avgPing.toFixed(2)}, InBuffer: ${
                   this.room.inputs[id].buffer.length
-                }, Seq: ${this.room.inputs[id].buffer.seekLast()?.seq}]`
+                }, Seq: ${this.room.inputs[id].buffer.seekLast()?.step}]`
             )
             .join(', ')
         ),

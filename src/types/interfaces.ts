@@ -1,7 +1,7 @@
 import type { PlayerInputs } from './types';
 
 export interface IMessageInput {
-  seq: number;
+  step: number;
   timestamp: number;
   input: PlayerInputs;
 }

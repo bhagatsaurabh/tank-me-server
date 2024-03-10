@@ -17,6 +17,7 @@ export default config({
   initializeGameServer: (gameServer) => {
     gameServer.define('lobby', Lobby);
     gameServer.define('desert', GameRoom).enableRealtimeListing();
+    // gameServer.simulateLatency(200)
   },
 
   initializeExpress: (app) => {
