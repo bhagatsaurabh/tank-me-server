@@ -2,7 +2,7 @@ import { avg } from '@/game/utils/utils';
 
 export class ClientStat {
   private pings: number[] = [];
-  private maxSamples: 100;
+  private maxSamples: 20;
   private lastAvgTimestamp = 0;
   private avgCalcInterval = 500;
   private _avgPing = 0;

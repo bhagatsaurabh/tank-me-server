@@ -17,7 +17,7 @@ import { IMessageInput } from '@/types/interfaces';
 
 export class World {
   private static timeStep = 1 / 60;
-  private static subTimeStep = 16;
+  private static subTimeStep = 12;
   private static lockstepMaxSteps = 4;
   static deltaTime = World.timeStep;
 
@@ -86,11 +86,13 @@ export class World {
     // Approach 2: Interlaced update
     const players: Player[] = [];
     const playerMessages: IMessageInput[][] = [];
+
     // 1. Get inputs from queued messages
     this.room.state.players.forEach((player) => {
       players.push(player);
       playerMessages.push(this.room.inputs[player.sid].getAll());
     });
+
     // 2. Process inputs
     for (let i = 0; i < Math.max(...playerMessages.map((messages) => messages.length)); i += 1) {
       players.forEach((player, idx) => {
@@ -98,9 +100,10 @@ export class World {
       });
       this.scene._advancePhysicsEngineStep(World.deltaTime);
     }
-    players.forEach((player, idx) => {
-      this.lastProcessedInput[player.sid] = playerMessages[idx][playerMessages[idx].length - 1];
-    });
+    players.forEach(
+      (player, idx) =>
+        (this.lastProcessedInput[player.sid] = playerMessages[idx][playerMessages[idx].length - 1])
+    );
   }
   private setCamera() {
     this.camera = new FreeCamera('default', new Vector3(245, 245, 245), this.scene, true);

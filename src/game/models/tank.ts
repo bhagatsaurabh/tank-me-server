@@ -28,7 +28,7 @@ export class Tank {
     maxSpeed: 15,
     maxTurningSpeed: 3,
     maxTurretAngle: 1.17, // ~67.5 deg
-    maxBarrelAngle: 0.43, // ~25 deg
+    maxBarrelAngle: 0.34, // ~20 deg
     maxTurretSpeed: 14,
     maxBarrelSpeed: 14,
     bodyMass: 2,
