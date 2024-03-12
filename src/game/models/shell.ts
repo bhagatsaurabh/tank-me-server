@@ -87,11 +87,22 @@ export class Shell {
     // Determine which physics body is which, in case two dynamically moving bodies collide
     const shellCollider = event.collider === this.mesh.physicsBody! ? event.collider : event.collidedAgainst;
     const otherCollider = event.collider === shellCollider ? event.collidedAgainst : event.collider;
-    if (otherCollider.transformNode.name.includes('Panzer')) {
+    if (otherCollider.transformNode.name.includes(this.playerId)) return;
+    else if (otherCollider.transformNode.name.includes('Panzer')) {
       otherCollider.applyImpulse(
         shellCollider.transformNode.getDirection(forwardVector).normalize().scale(this.impactEnergy),
         this.mesh.absolutePosition.clone()
       );
+      const hitPlayer = Object.values(this.tank.world.players).find((tank) =>
+        tank.physicsBodies.includes(otherCollider)
+      );
+      if (hitPlayer?.barrel === otherCollider.transformNode) {
+        hitPlayer.damage(10);
+      } else if (hitPlayer?.turret === otherCollider.transformNode) {
+        hitPlayer.damage(25);
+      } else if (hitPlayer?.body === otherCollider.transformNode) {
+        hitPlayer.damage(30);
+      }
     }
 
     this.dispose();

@@ -29,6 +29,8 @@ export class World {
   scene: Scene;
   players: Record<string, Tank> = {};
   physicsBodies: PhysicsBody[] = [];
+  isStarted = true;
+  isDestroyed = false;
 
   private constructor(public engine: NullEngine, public room: GameRoom) {
     this.scene = new Scene(this.engine);
@@ -83,6 +85,15 @@ export class World {
   }
   lastProcessedInput: Record<string, IMessageInput> = {};
   private beforeStep() {
+    if (
+      performance.now() - this.room.state.startTimestamp >= this.room.matchDuration ||
+      this.room.isMatchEnded
+    ) {
+      this.stop();
+      this.destroy();
+      return;
+    }
+
     // Approach 2: Interlaced update
     const players: Player[] = [];
     const playerMessages: IMessageInput[][] = [];
@@ -138,6 +149,12 @@ export class World {
     this.engine.runRenderLoop(this.render.bind(this));
     this.physicsPlugin.setTimeStep(World.timeStep);
   }
+  private stop() {
+    if (!this.isStarted) return;
+
+    this.physicsPlugin.setTimeStep(0);
+    this.isStarted = false;
+  }
   private render() {
     this.scene.render();
   }
@@ -173,10 +190,13 @@ export class World {
     this.players[id]?.dispose();
   }
   destroy() {
+    if (this.isDestroyed) return;
+
     this.observers.forEach((observer) => observer.remove());
     Object.values(this.players).forEach((player) => player?.dispose());
     this.ground?.dispose();
     this.scene.dispose();
     this.engine.dispose();
+    this.isDestroyed = true;
   }
 }

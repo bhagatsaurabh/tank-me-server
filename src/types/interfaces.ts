@@ -9,4 +9,8 @@ export interface IMessageInput {
 export interface IMessageFire {
   id: string;
 }
+export interface IMessageEnd {
+  winner: string;
+  loser: string;
+}
 export interface IMessageLoad {}

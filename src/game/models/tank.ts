@@ -503,7 +503,7 @@ export class Tank {
   }
   private decelerate(dt: number, modifier: number = Tank.config.decelerationModifier) {
     let speed = 0;
-    if (Math.abs(this.leftSpeed) < 0.001 && Math.abs(this.rightSpeed) < 0.001) {
+    if (Math.abs(this.leftSpeed) < 0.1 && Math.abs(this.rightSpeed) < 0.1) {
       this.leftSpeed = this.rightSpeed = 0;
       speed = 0;
     } else {
@@ -564,12 +564,16 @@ export class Tank {
     return true;
   }
 
-  public explode() {
-    // TODO
-  }
   public checkStuck() {
     if (this.body.up.y < 0) this.isStuck = true;
     // TODO: Delayed explosion ?
+  }
+  public damage(amount: number) {
+    this.health -= amount;
+
+    if (this.health <= 0) {
+      this.world.room.matchEnd(null, this.id);
+    }
   }
   public dispose() {
     this.observers.forEach((observer) => observer.remove());
