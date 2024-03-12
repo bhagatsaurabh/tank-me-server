@@ -122,5 +122,11 @@ export class Player extends Schema {
 
 export class RoomState extends Schema {
   @type('string') status: string;
+  @type('number') startTimestamp: number;
   @type({ map: Player }) players = new MapSchema<Player>();
+
+  constructor() {
+    super();
+    this.startTimestamp = performance.now();
+  }
 }

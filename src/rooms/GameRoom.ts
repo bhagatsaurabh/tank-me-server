@@ -11,10 +11,12 @@ import { IMessageInput } from '@/types/interfaces';
 import { Monitor } from '@/monitor/monitor';
 
 export class GameRoom extends Room<RoomState> {
-  maxClients = 1;
+  maxClients = 2;
+  matchDuration = 600000;
   inputs: Record<string, InputManager> = {};
   world: World;
   monitor: Monitor;
+  isMatchEnded = false;
 
   async onCreate(_options: any) {
     this.world = await World.create(this);
@@ -50,12 +52,15 @@ export class GameRoom extends Room<RoomState> {
     }
   }
   onLeave(client: Client, _consented: boolean) {
-    if (this.world.players[client.sessionId]) {
-      this.world.removeTank(client.sessionId);
-    }
     if (this.state.players.has(client.sessionId)) {
+      if (this.world.players[client.sessionId]) {
+        this.world.removeTank(client.sessionId);
+      }
+
       this.state.players.delete(client.sessionId);
       console.log(client.sessionId, 'left!');
+
+      this.matchEnd(null, client.sessionId);
     }
   }
   onDispose() {
@@ -66,7 +71,7 @@ export class GameRoom extends Room<RoomState> {
 
   setMessageListeners() {
     this.onMessage<IMessageInput>(MessageType.INPUT, (client, message: IMessageInput) => {
-      if (this.state.status === 'matching') return;
+      if (this.state.status === 'matching' || this.isMatchEnded) return;
 
       this.monitor.clientPing(client.sessionId);
       this.inputs[client.sessionId].queue(message, this.monitor.getAvgPing(client.sessionId));
@@ -77,5 +82,23 @@ export class GameRoom extends Room<RoomState> {
   }
   sendEvent<T>(type: MessageType, message: T, id: string) {
     this.clients.find((c) => c.sessionId === id)?.send(type, message);
+  }
+  matchEnd(winner: string | null, loser: string | null) {
+    this.isMatchEnded = true;
+    if (!winner) {
+      this.state.players.forEach((player) => {
+        if (player.sid !== loser) {
+          winner = player.sid;
+        }
+      });
+    }
+    if (!loser) {
+      this.state.players.forEach((player) => {
+        if (player.sid !== winner) {
+          loser = player.sid;
+        }
+      });
+    }
+    this.clients.forEach((client) => client.send(MessageType.MATCH_END, { winner, loser }));
   }
 }
