@@ -566,7 +566,6 @@ export class Tank {
 
   public checkStuck() {
     if (this.body.up.y < 0) this.isStuck = true;
-    // TODO: Delayed explosion ?
   }
   public damage(amount: number) {
     this.health -= amount;

@@ -156,7 +156,12 @@ export class World {
     this.isStarted = false;
   }
   private render() {
-    this.scene.render();
+    if (!this.isStarted) return;
+    try {
+      this.scene.render();
+    } catch (e) {
+      //
+    }
   }
   private getSpawnPoint(): Vector3 {
     switch (choose<SpawnAxis>(spawnAxes)) {
@@ -198,5 +203,6 @@ export class World {
     this.scene.dispose();
     this.engine.dispose();
     this.isDestroyed = true;
+    this.room.disconnect();
   }
 }
