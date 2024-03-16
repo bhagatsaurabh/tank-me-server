@@ -17,8 +17,8 @@ import { Shell } from './shell';
 import { avg, clamp } from '@/game/utils/utils';
 import { Player } from '@/rooms/schema/RoomState';
 import { World } from '../main';
-import { IMessageFire, IMessageLoad } from '@/types/interfaces';
 import { GameInputType, MessageType, PlayerInputs } from '@/types/types';
+import { IMessageFire } from '@/types/interfaces';
 
 export class Tank {
   private static config = {
@@ -78,7 +78,7 @@ export class Tank {
   static async create(world: World, id: string, rootMesh: AbstractMesh, spawn: Vector3) {
     const cloned = rootMesh.clone(`${rootMesh.name.replace(':Ref', '')}:${id}`, null) as AbstractMesh;
     const newTank = new Tank(world, id, cloned, spawn);
-    await newTank.loadCannon(true);
+    await newTank.loadCannon();
     return newTank;
   }
 
@@ -318,11 +318,7 @@ export class Tank {
 
     return _6dofConstraint;
   }
-  private async loadCannon(init: boolean = false) {
-    if (!init) {
-      // Play load sound on original client
-      this.world.room.sendEvent<IMessageLoad>(MessageType.LOAD, {}, this.id);
-    }
+  private async loadCannon() {
     this.loadedShell = await Shell.create(this);
     this.isCanonReady = true;
   }

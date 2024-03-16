@@ -13,4 +13,3 @@ export interface IMessageEnd {
   winner: string;
   loser: string;
 }
-export interface IMessageLoad {}
