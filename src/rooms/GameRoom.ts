@@ -34,7 +34,12 @@ export class GameRoom extends Room<RoomState> {
     console.log('Room', this.roomId, 'created!');
   }
   async onAuth(_client: any, options: { accessToken: string }) {
-    return await auth.verifyIdToken(options.accessToken);
+    const idToken = await auth.verifyIdToken(options.accessToken);
+    let hasJoined = false;
+    this.state.players.forEach((player) => {
+      if (player.uid === idToken.uid) hasJoined = true;
+    });
+    return hasJoined ? null : idToken;
   }
   async onJoin(client: Client, _options: any, authData: DecodedIdToken) {
     const tank = await this.world.createTank(client.sessionId);
