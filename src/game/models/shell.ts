@@ -96,13 +96,17 @@ export class Shell {
       const hitPlayer = Object.values(this.tank.world.players).find((tank) =>
         tank.physicsBodies.includes(otherCollider)
       );
+
+      let damage = 0;
       if (hitPlayer?.barrel === otherCollider.transformNode) {
-        hitPlayer.damage(10);
+        damage = 10;
       } else if (hitPlayer?.turret === otherCollider.transformNode) {
-        hitPlayer.damage(25);
+        damage = 25;
       } else if (hitPlayer?.body === otherCollider.transformNode) {
-        hitPlayer.damage(30);
+        damage = 30;
       }
+      hitPlayer.damage(damage);
+      this.tank.world.room.stats[this.tank.id].totalDamage += damage;
     }
 
     this.dispose();
@@ -133,5 +137,6 @@ export class Shell {
       this.mesh.getAbsolutePosition()
     );
     this.isSpent = true;
+    this.tank.world.room.stats[this.tank.id].shellsUsed += 1;
   }
 }
