@@ -6,7 +6,7 @@ import { Player, RoomState } from './schema/RoomState';
 import { auth } from '../config/firebase';
 import { World } from '@/game/main';
 import { InputManager } from '@/game/input';
-import { MessageType } from '@/types/types';
+import { MatchStats, MessageType, PlayerStats } from '@/types/types';
 import { IMessageInput } from '@/types/interfaces';
 import { Monitor } from '@/monitor/monitor';
 
@@ -17,6 +17,7 @@ export class GameRoom extends Room<RoomState> {
   world: World;
   monitor: Monitor;
   isMatchEnded = false;
+  stats: MatchStats = {};
 
   async onCreate(_options: any) {
     this.world = await World.create(this);
@@ -49,6 +50,7 @@ export class GameRoom extends Room<RoomState> {
     this.state.players.set(client.sessionId, player);
     this.inputs[client.sessionId] = new InputManager();
     this.monitor.addClient(client.sessionId);
+    this.stats[client.sessionId] = { shellsUsed: 0, totalDamage: 0 };
     console.log(client.sessionId, 'joined!');
 
     if (this.state.players.size === this.maxClients) {
@@ -104,6 +106,12 @@ export class GameRoom extends Room<RoomState> {
         }
       });
     }
-    this.clients.forEach((client) => client.send(MessageType.MATCH_END, { winner, loser }));
+    this.clients.forEach((client) =>
+      client.send(MessageType.MATCH_END, { winner, loser, stats: this.stats })
+    );
+  }
+
+  logStat<K extends keyof PlayerStats>(id: string, key: K, data: PlayerStats[K]) {
+    this.stats[id][key] = data;
   }
 }
