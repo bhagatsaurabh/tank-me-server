@@ -1,3 +1,4 @@
+import { PlayerStats } from '@/types/types';
 import { Vector3 } from '@babylonjs/core';
 import { webcrypto as crypto } from 'node:crypto';
 
@@ -42,4 +43,9 @@ export const throttle = (cb: (...argmts: any) => void, delay: number) => {
     }
   };
   return throttled;
+};
+
+export const calcPoints = (stats: PlayerStats) => {
+  if (stats.shellsUsed === 0) return 0;
+  return Math.floor(((3 / stats.shellsUsed) * 0.2 + (stats.totalDamage / 100) * 0.8) * 100);
 };

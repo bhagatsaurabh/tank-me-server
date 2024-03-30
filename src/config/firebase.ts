@@ -1,10 +1,7 @@
 import firebase from 'firebase-admin';
 import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp } from 'firebase-admin/app';
-
-if (process.env.PROFILE === 'Dev') {
-  process.env['FIREBASE_AUTH_EMULATOR_HOST'] = '127.0.0.1:9099';
-}
 
 const app = initializeApp({
   credential: firebase.credential.cert(
@@ -13,3 +10,4 @@ const app = initializeApp({
 });
 
 export const auth = getAuth(app);
+export const firestore = getFirestore(app);
