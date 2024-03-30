@@ -106,7 +106,7 @@ export class Shell {
         damage = 30;
       }
       hitPlayer.damage(damage);
-      this.tank.world.room.stats[this.tank.id].totalDamage += damage;
+      this.tank.world.room.logStat(this.tank.id, 'totalDamage', damage);
     }
 
     this.dispose();
@@ -137,6 +137,6 @@ export class Shell {
       this.mesh.getAbsolutePosition()
     );
     this.isSpent = true;
-    this.tank.world.room.stats[this.tank.id].shellsUsed += 1;
+    this.tank.world.room.logStat(this.tank.id, 'shellsUsed', 1);
   }
 }

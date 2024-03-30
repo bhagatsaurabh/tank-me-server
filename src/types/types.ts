@@ -31,5 +31,6 @@ export type PlayerInputs = Partial<Record<GameInputType, boolean>>;
 export type PlayerStats = {
   shellsUsed: number;
   totalDamage: number;
+  points: number;
 };
 export type MatchStats = Record<string, PlayerStats>;

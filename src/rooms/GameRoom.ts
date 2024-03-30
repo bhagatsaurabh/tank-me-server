@@ -9,6 +9,9 @@ import { InputManager } from '@/game/input';
 import { MatchStats, MessageType, PlayerStats } from '@/types/types';
 import { IMessageInput } from '@/types/interfaces';
 import { Monitor } from '@/monitor/monitor';
+import { Nullable } from '@babylonjs/core';
+import { calcPoints } from '@/game/utils/utils';
+import { updatePlayerStats } from '@/database/driver';
 
 export class GameRoom extends Room<RoomState> {
   maxClients = 2;
@@ -50,7 +53,7 @@ export class GameRoom extends Room<RoomState> {
     this.state.players.set(client.sessionId, player);
     this.inputs[client.sessionId] = new InputManager();
     this.monitor.addClient(client.sessionId);
-    this.stats[client.sessionId] = { shellsUsed: 0, totalDamage: 0 };
+    this.stats[client.sessionId] = { shellsUsed: 0, totalDamage: 0, points: 0 };
     console.log(client.sessionId, 'joined!');
 
     if (this.state.players.size === this.maxClients) {
@@ -58,7 +61,7 @@ export class GameRoom extends Room<RoomState> {
       this.monitor.start(true);
     }
   }
-  onLeave(client: Client, _consented: boolean) {
+  async onLeave(client: Client, _consented: boolean) {
     if (this.state.players.has(client.sessionId)) {
       if (this.world.players[client.sessionId]) {
         this.world.removeTank(client.sessionId);
@@ -67,7 +70,7 @@ export class GameRoom extends Room<RoomState> {
       this.state.players.delete(client.sessionId);
       console.log(client.sessionId, 'left!');
 
-      this.matchEnd(null, client.sessionId);
+      await this.matchEnd(null, client.sessionId);
     }
   }
   onDispose() {
@@ -90,7 +93,7 @@ export class GameRoom extends Room<RoomState> {
   sendEvent<T>(type: MessageType, message: T, id: string) {
     this.clients.find((c) => c.sessionId === id)?.send(type, message);
   }
-  matchEnd(winner: string | null, loser: string | null) {
+  async matchEnd(winner: Nullable<string>, loser: Nullable<string>) {
     this.isMatchEnded = true;
     if (!winner) {
       this.state.players.forEach((player) => {
@@ -106,12 +109,21 @@ export class GameRoom extends Room<RoomState> {
         }
       });
     }
-    this.clients.forEach((client) =>
-      client.send(MessageType.MATCH_END, { winner, loser, stats: this.stats })
-    );
+
+    await Promise.all(this.clients.map((client) => this.sendMatchEnd(client, winner, loser)));
   }
 
   logStat<K extends keyof PlayerStats>(id: string, key: K, data: PlayerStats[K]) {
-    this.stats[id][key] = data;
+    if (typeof data === 'number') {
+      this.stats[id][key] += data;
+    }
+  }
+
+  async sendMatchEnd(client: Client, winner: string, loser: string) {
+    this.stats[client.sessionId].points = calcPoints(this.stats[client.sessionId]);
+    const uid = this.state.players.get(client.sessionId).uid;
+
+    await updatePlayerStats(uid, this.stats[client.sessionId].points, client.sessionId === winner);
+    client.send(MessageType.MATCH_END, { winner, loser, stats: this.stats });
   }
 }
