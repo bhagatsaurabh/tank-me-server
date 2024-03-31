@@ -70,7 +70,7 @@ export class GameRoom extends Room<RoomState> {
       this.state.players.delete(client.sessionId);
       console.log(client.sessionId, 'left!');
 
-      await this.matchEnd(null, client.sessionId);
+      this.matchEnd(null, client.sessionId);
     }
   }
   onDispose() {
