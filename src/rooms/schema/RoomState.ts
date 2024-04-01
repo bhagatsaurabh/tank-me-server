@@ -127,6 +127,6 @@ export class RoomState extends Schema {
 
   constructor() {
     super();
-    this.startTimestamp = performance.now();
+    this.startTimestamp = Date.now();
   }
 }

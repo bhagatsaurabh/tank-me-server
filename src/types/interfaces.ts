@@ -1,3 +1,4 @@
+import { Nullable } from '@babylonjs/core';
 import type { MatchStats, PlayerInputs } from './types';
 
 export interface IMessageInput {
@@ -10,7 +11,8 @@ export interface IMessageFire {
   id: string;
 }
 export interface IMessageEnd {
-  winner: string;
-  loser: string;
+  winner: Nullable<string>;
+  loser: Nullable<string>;
+  isDraw: boolean;
   stats: MatchStats;
 }
