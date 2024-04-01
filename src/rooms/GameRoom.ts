@@ -15,12 +15,13 @@ import { updatePlayerStats } from '@/database/driver';
 
 export class GameRoom extends Room<RoomState> {
   maxClients = 2;
-  matchDuration = 600000;
+  matchDuration = 60000;
   inputs: Record<string, InputManager> = {};
   world: World;
   monitor: Monitor;
   isMatchEnded = false;
   stats: MatchStats = {};
+  timerHandle: NodeJS.Timeout = null;
 
   async onCreate(_options: any) {
     this.world = await World.create(this);
@@ -58,6 +59,7 @@ export class GameRoom extends Room<RoomState> {
 
     if (this.state.players.size === this.maxClients) {
       this.state.status = 'ready';
+      this.startTimer();
       this.monitor.start(true);
     }
   }
@@ -70,12 +72,14 @@ export class GameRoom extends Room<RoomState> {
       this.state.players.delete(client.sessionId);
       console.log(client.sessionId, 'left!');
 
-      this.matchEnd(null, client.sessionId);
+      await this.matchEnd(null, client.sessionId);
+      this.disconnect();
     }
   }
   onDispose() {
     this.monitor.stop();
     this.world.destroy();
+
     console.log('Room', this.roomId, 'disposed');
   }
 
@@ -93,24 +97,29 @@ export class GameRoom extends Room<RoomState> {
   sendEvent<T>(type: MessageType, message: T, id: string) {
     this.clients.find((c) => c.sessionId === id)?.send(type, message);
   }
-  async matchEnd(winner: Nullable<string>, loser: Nullable<string>) {
+  async matchEnd(winner: Nullable<string>, loser: Nullable<string>, isDraw = false) {
+    if (this.isMatchEnded) return;
+
+    console.log('MatchEnd');
     this.isMatchEnded = true;
-    if (!winner) {
-      this.state.players.forEach((player) => {
-        if (player.sid !== loser) {
-          winner = player.sid;
-        }
-      });
-    }
-    if (!loser) {
-      this.state.players.forEach((player) => {
-        if (player.sid !== winner) {
-          loser = player.sid;
-        }
-      });
+    if (!isDraw) {
+      if (!winner) {
+        this.state.players.forEach((player) => {
+          if (player.sid !== loser) {
+            winner = player.sid;
+          }
+        });
+      }
+      if (!loser) {
+        this.state.players.forEach((player) => {
+          if (player.sid !== winner) {
+            loser = player.sid;
+          }
+        });
+      }
     }
 
-    await Promise.all(this.clients.map((client) => this.sendMatchEnd(client, winner, loser)));
+    await Promise.all(this.clients.map((client) => this.sendMatchEnd(client, winner, loser, isDraw)));
   }
 
   logStat<K extends keyof PlayerStats>(id: string, key: K, data: PlayerStats[K]) {
@@ -118,12 +127,20 @@ export class GameRoom extends Room<RoomState> {
       this.stats[id][key] += data;
     }
   }
-
-  async sendMatchEnd(client: Client, winner: string, loser: string) {
+  startTimer() {
+    this.timerHandle = setInterval(async () => {
+      if (Date.now() - this.state.startTimestamp >= this.matchDuration) {
+        clearInterval(this.timerHandle);
+        await this.matchEnd(null, null, true);
+        this.disconnect();
+      }
+    }, 1000);
+  }
+  async sendMatchEnd(client: Client, winner: string, loser: string, isDraw = false) {
     this.stats[client.sessionId].points = calcPoints(this.stats[client.sessionId]);
     const uid = this.state.players.get(client.sessionId).uid;
 
     await updatePlayerStats(uid, this.stats[client.sessionId].points, client.sessionId === winner);
-    client.send(MessageType.MATCH_END, { winner, loser, stats: this.stats });
+    client.send(MessageType.MATCH_END, { winner, loser, stats: this.stats, isDraw });
   }
 }

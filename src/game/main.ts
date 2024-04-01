@@ -85,12 +85,8 @@ export class World {
   }
   lastProcessedInput: Record<string, IMessageInput> = {};
   private beforeStep() {
-    if (
-      performance.now() - this.room.state.startTimestamp >= this.room.matchDuration ||
-      this.room.isMatchEnded
-    ) {
+    if (this.room.isMatchEnded) {
       this.stop();
-      this.destroy();
       return;
     }
 
