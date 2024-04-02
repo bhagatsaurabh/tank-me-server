@@ -4,4 +4,8 @@ import XMLHttpRequest from 'xhr2';
 global.XMLHttpRequest = XMLHttpRequest;
 
 import app from './app.config';
-listen(app, 2567);
+let port = 2567;
+if (['string', 'number'].includes(typeof process.env.PORT)) {
+  port = typeof process.env.PORT === 'number' ? process.env.PORT : parseInt(process.env.PORT);
+}
+listen(app, port);
