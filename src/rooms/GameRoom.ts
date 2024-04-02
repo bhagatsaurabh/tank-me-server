@@ -1,6 +1,7 @@
 import { Room, Client } from '@colyseus/core';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 import '@babylonjs/loaders/glTF/2.0/glTFLoader';
+import { Nullable } from '@babylonjs/core';
 
 import { Player, RoomState } from './schema/RoomState';
 import { auth } from '../config/firebase';
@@ -9,7 +10,6 @@ import { InputManager } from '@/game/input';
 import { MatchStats, MessageType, PlayerStats } from '@/types/types';
 import { IMessageInput } from '@/types/interfaces';
 import { Monitor } from '@/monitor/monitor';
-import { Nullable } from '@babylonjs/core';
 import { calcPoints } from '@/game/utils/utils';
 import { updatePlayerStats } from '@/database/driver';
 

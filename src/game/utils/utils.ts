@@ -1,5 +1,6 @@
-import { PlayerStats } from '@/types/types';
 import { Vector3 } from '@babylonjs/core';
+
+import { PlayerStats } from '@/types/types';
 import { webcrypto as crypto } from 'node:crypto';
 
 export const gravityVector = new Vector3(0, -9.8, 0);

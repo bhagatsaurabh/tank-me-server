@@ -3,7 +3,7 @@ import { monitor } from '@colyseus/monitor';
 import { playground } from '@colyseus/playground';
 import { join, dirname } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { static as static_ } from 'express';
 import HavokPhysics, { type HavokPhysicsWithBindings } from '@babylonjs/havok';
 import expressBasicAuth from 'express-basic-auth';
@@ -27,7 +27,7 @@ export default config({
     app.use('/assets', static_('assets'));
     const basicAuthMiddleware = expressBasicAuth({
       users: {
-        admin: 'admin'
+        admin: process.env.COLYSEUS_ADMIN_KEY
       },
       challenge: true
     });
@@ -38,7 +38,7 @@ export default config({
     // Load HavokPhysics binary
     const havokBinary = readFileSync(
       join(
-        dirname(fileURLToPath(import.meta.url)),
+        dirname(fileURLToPath(pathToFileURL(__filename).toString())),
         '../node_modules/@babylonjs/havok/lib/esm/HavokPhysics.wasm'
       )
     );
