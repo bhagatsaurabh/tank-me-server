@@ -24,7 +24,7 @@ export default config({
     if (process.env.NODE_ENV !== 'production') {
       app.use('/', playground);
     }
-    app.use('/assets', static_('public'));
+    app.use('/assets', static_('assets'));
     const basicAuthMiddleware = expressBasicAuth({
       users: {
         admin: 'admin'

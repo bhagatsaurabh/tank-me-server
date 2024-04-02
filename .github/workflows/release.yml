@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '!README.md'
+  workflow_dispatch:
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+
+  Deploy:
+    needs: [Build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: sed -i '/public/d' ./.gitignore
+
+      - name: Deploy to Heroku
+        uses: AkhileshNS/heroku-deploy@v3.12.13
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: 'tankme-server'
+          heroku_email: 'saurabhbhagat98die@gmail.com'
