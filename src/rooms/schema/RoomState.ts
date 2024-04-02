@@ -1,7 +1,8 @@
-import { Tank } from '@/game/models/tank';
-import { IMessageInput } from '@/types/interfaces';
 import { Quaternion, Vector3 } from '@babylonjs/core';
 import { MapSchema, Schema, type } from '@colyseus/schema';
+
+import { Tank } from '@/game/models/tank';
+import { IMessageInput } from '@/types/interfaces';
 
 export class Position extends Schema {
   @type('number') x: number;

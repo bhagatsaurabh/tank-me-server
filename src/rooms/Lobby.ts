@@ -1,4 +1,4 @@
-import { LobbyRoom } from 'colyseus';
+import { LobbyRoom } from '@colyseus/core';
 import { auth } from '../config/firebase';
 
 export class Lobby extends LobbyRoom {
