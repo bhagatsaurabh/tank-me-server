@@ -14,6 +14,7 @@ import { GameRoom } from '@/rooms/GameRoom';
 import { physicsEngine } from '@/app.config';
 import { Player } from '@/rooms/schema/RoomState';
 import { IMessageInput } from '@/types/interfaces';
+import { port } from '@/index';
 
 export class World {
   private static timeStep = 1 / 60;
@@ -58,7 +59,7 @@ export class World {
   private static async importPlayerMesh(instance: World) {
     const { meshes } = await SceneLoader.ImportMeshAsync(
       null,
-      'http://localhost:2567/assets/models/',
+      `http://localhost:${port}/assets/models/`,
       'Panzer_I.glb',
       instance.scene
     );

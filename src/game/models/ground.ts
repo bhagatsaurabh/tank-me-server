@@ -1,3 +1,4 @@
+import { port } from '@/index';
 import { Scene } from '@babylonjs/core';
 import { MeshBuilder, type GroundMesh } from '@babylonjs/core/Meshes';
 import { PhysicsAggregate, PhysicsShapeType } from '@babylonjs/core/Physics';
@@ -15,7 +16,7 @@ export class Ground {
   private static createMesh(scene: Scene) {
     const ground = new Ground();
     return new Promise<Ground>((resolve, reject) => {
-      loadImage('http://localhost:2567/assets/map/desert/height.png').then((image) => {
+      loadImage(`http://localhost:${port}/assets/map/desert/height.png`).then((image) => {
         const canvas = createCanvas(2048, 2048);
         const ctx = canvas.getContext('2d');
         ctx.drawImage(image, 0, 0, 2048, 2048);
