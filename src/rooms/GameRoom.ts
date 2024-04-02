@@ -77,8 +77,8 @@ export class GameRoom extends Room<RoomState> {
     }
   }
   onDispose() {
-    this.monitor.stop();
-    this.world.destroy();
+    this.monitor?.stop();
+    this.world?.destroy();
 
     console.log('Room', this.roomId, 'disposed');
   }
