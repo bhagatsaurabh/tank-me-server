@@ -10,6 +10,7 @@ export class Monitor {
   set logInterval(ms: number) {
     this._logInterval = clamp(ms, 500, Number.MAX_SAFE_INTEGER);
   }
+  private enabled = false;
 
   constructor(public room: GameRoom) {}
 
@@ -23,6 +24,8 @@ export class Monitor {
     return this.clientStats[sessionId].avgPing;
   }
   start(debug: boolean = false) {
+    if (!this.enabled) return;
+
     this.debug = debug;
     this.handle = setInterval(
       () =>
@@ -41,6 +44,8 @@ export class Monitor {
     );
   }
   stop() {
+    if (!this.enabled) return;
+
     clearTimeout(this.handle);
   }
 }

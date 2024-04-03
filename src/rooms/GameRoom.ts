@@ -15,7 +15,7 @@ import { updatePlayerStats } from '@/database/driver';
 
 export class GameRoom extends Room<RoomState> {
   maxClients = 2;
-  matchDuration = 60000;
+  matchDuration = 600000;
   inputs: Record<string, InputManager> = {};
   world: World;
   monitor: Monitor;
