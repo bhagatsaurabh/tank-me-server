@@ -5,7 +5,7 @@
   "description": "TankMe! Authoritative Server",
   "main": "build/index.js",
   "engines": {
-    "node": ">= 16.13.0"
+    "node": "18.x"
   },
   "scripts": {
     "debug": "node --inspect --loader tsx src/index.ts",
