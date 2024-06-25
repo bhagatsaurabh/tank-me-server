@@ -18,9 +18,9 @@
   "author": "saurabhbhagat98die@gmail.com",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/saurabh-prosoft/tankme-server/issues"
+    "url": "https://github.com/bhagatsaurabh/tankme-server/issues"
   },
-  "homepage": "https://github.com/saurabh-prosoft/tankme-server#readme",
+  "homepage": "https://github.com/bhagatsaurabh/tankme-server#readme",
   "devDependencies": {
     "@colyseus/testing": "^0.15.0",
     "mocha": "^10.2.0",
