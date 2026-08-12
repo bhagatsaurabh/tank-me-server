@@ -1,9 +1,9 @@
-import { firestore } from '@/config/firebase';
+import { firestore } from '@/config/firebase.js';
 
 export const updatePlayerStats = async (uid: string, points: number, didWin = false) => {
   const profileSnap = await firestore.collection('users').doc(uid).get();
   if (!profileSnap.exists) return;
-  const currStats = profileSnap.data().stats;
+  const currStats = profileSnap.data()?.stats;
   if (!currStats) return;
 
   currStats.matches += 1;

@@ -1,20 +1,32 @@
-import { Scene, NullEngine, Observer, FreeCamera } from '@babylonjs/core';
-import { SceneLoader } from '@babylonjs/core/Loading';
-import { Axis, Space, Vector3 } from '@babylonjs/core/Maths';
-import { AbstractMesh, MeshBuilder, TransformNode } from '@babylonjs/core/Meshes';
-import { PBRMaterial } from '@babylonjs/core/Materials';
-import { HavokPlugin, PhysicsAggregate, PhysicsBody, PhysicsShapeType } from '@babylonjs/core/Physics';
+import {
+  Scene,
+  NullEngine,
+  Observer,
+  FreeCamera,
+  AbstractMesh,
+  HavokPlugin,
+  PhysicsBody,
+  SceneLoader,
+  Vector3,
+  PBRMaterial,
+  TransformNode,
+  MeshBuilder,
+  Space,
+  Axis,
+  PhysicsAggregate,
+  PhysicsShapeType
+} from '@babylonjs/core';
 
-import { choose, gravityVector, randInRange } from '@/game/utils/utils';
-import { Tank } from './models/tank';
-import { Ground } from './models/ground';
-import { SpawnAxis } from '@/types/types';
-import { spawnAxes } from './constants';
-import { GameRoom } from '@/rooms/GameRoom';
-import { physicsEngine } from '@/app.config';
-import { Player } from '@/rooms/schema/RoomState';
-import { IMessageInput } from '@/types/interfaces';
-import { port } from '@/index';
+import { choose, gravityVector, randInRange } from '@/game/utils/utils.js';
+import { Tank } from './models/tank.js';
+import { Ground } from './models/ground.js';
+import { SpawnAxis } from '@/types/types.js';
+import { spawnAxes } from './constants.js';
+import { GameRoom } from '@/rooms/GameRoom.js';
+import { physicsEngine } from '@/app.config.js';
+import { Player } from '@/rooms/schema/RoomState.js';
+import { IMessageInput } from '@/types/interfaces.js';
+import { port } from '@/index.js';
 
 export class World {
   private static timeStep = 1 / 60;
@@ -24,7 +36,7 @@ export class World {
 
   private tankMeshes: AbstractMesh[] = [];
   private observers: Observer<Scene>[] = [];
-  private camera: FreeCamera;
+  private camera!: FreeCamera;
   private ground!: Ground;
   physicsPlugin: HavokPlugin;
   scene: Scene;
@@ -33,7 +45,10 @@ export class World {
   isStarted = true;
   isDestroyed = false;
 
-  private constructor(public engine: NullEngine, public room: GameRoom) {
+  private constructor(
+    public engine: NullEngine,
+    public room: GameRoom
+  ) {
     this.scene = new Scene(this.engine);
     this.physicsPlugin = new HavokPlugin(false, physicsEngine);
     this.scene.enablePhysics(gravityVector, this.physicsPlugin);
@@ -96,7 +111,7 @@ export class World {
     const playerMessages: IMessageInput[][] = [];
 
     // 1. Get inputs from queued messages
-    this.room.state.players.forEach((player) => {
+    this.room.state.players.forEach((player: Player) => {
       players.push(player);
       playerMessages.push(this.room.inputs[player.sid].getAll());
     });
@@ -104,7 +119,7 @@ export class World {
     // 2. Process inputs
     for (let i = 0; i < Math.max(...playerMessages.map((messages) => messages.length)); i += 1) {
       players.forEach((player, idx) => {
-        playerMessages[idx][i]?.input && this.players[player.sid].applyInputs(playerMessages[idx][i].input);
+        playerMessages[idx][i]?.input && this.players[player.sid].applyInputs(playerMessages[idx][i].input!);
       });
       this.scene._advancePhysicsEngineStep(World.deltaTime);
     }

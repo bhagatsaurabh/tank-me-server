@@ -1,13 +1,11 @@
 {
   "compilerOptions": {
     "outDir": "build",
+    "rootDir": ".",
     "target": "ESNext",
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
     "strict": true,
-    "allowJs": true,
-    "strictNullChecks": false,
-    "esModuleInterop": true,
     "experimentalDecorators": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

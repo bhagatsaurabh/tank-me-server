@@ -1,10 +1,10 @@
 import { Nullable } from '@babylonjs/core';
-import type { MatchStats, PlayerInputs } from './types';
+import type { MatchStats, PlayerInputs } from './types.js';
 
 export interface IMessageInput {
   step: number;
   timestamp: number;
-  input: PlayerInputs;
+  input: PlayerInputs | null;
 }
 
 export interface IMessageFire {

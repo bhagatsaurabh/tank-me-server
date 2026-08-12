@@ -1,6 +1,6 @@
 import { Vector3 } from '@babylonjs/core';
 
-import { PlayerStats } from '@/types/types';
+import { PlayerStats } from '@/types/types.js';
 import { webcrypto as crypto } from 'node:crypto';
 
 export const gravityVector = new Vector3(0, -9.8, 0);
@@ -29,7 +29,7 @@ export const luid = () => `${S4()}${S4()}`;
 export const choose = <T>(vals: T[]): T => vals[Math.round(randInRange(0, vals.length - 1))];
 
 export const throttle = (cb: (...argmts: any) => void, delay: number) => {
-  let timerHandle: NodeJS.Timeout, args: any;
+  let timerHandle: NodeJS.Timeout | null, args: any;
   const throttled = (...a: any) => {
     args = a;
     if (!timerHandle) {

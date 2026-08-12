@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7.0.1
 
       - name: Build
         run: |
@@ -22,13 +22,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v7.0.1
       - run: sed -i '/public/d' ./.gitignore
 
       - name: Deploy to Heroku
-        uses: AkhileshNS/heroku-deploy@v3.13.15
+        uses: AkhileshNS/heroku-deploy@v3.15.15
         with:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-          heroku_app_name: 'tankme-server'
-          heroku_email: 'saurabhbhagat98die@gmail.com'
+          heroku_app_name: "tankme-server"
+          heroku_email: "saurabhbhagat98die@gmail.com"

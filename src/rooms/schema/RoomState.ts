@@ -1,13 +1,13 @@
 import { Quaternion, Vector3 } from '@babylonjs/core';
 import { MapSchema, Schema, type } from '@colyseus/schema';
 
-import { Tank } from '@/game/models/tank';
-import { IMessageInput } from '@/types/interfaces';
+import { Tank } from '@/game/models/tank.js';
+import { IMessageInput } from '@/types/interfaces.js';
 
 export class Position extends Schema {
-  @type('number') x: number;
-  @type('number') y: number;
-  @type('number') z: number;
+  @type('number') x!: number;
+  @type('number') y!: number;
+  @type('number') z!: number;
 
   constructor(pos: Vector3) {
     super();
@@ -20,10 +20,10 @@ export class Position extends Schema {
   }
 }
 export class Rotation extends Schema {
-  @type('number') x: number;
-  @type('number') y: number;
-  @type('number') z: number;
-  @type('number') w: number;
+  @type('number') x!: number;
+  @type('number') y!: number;
+  @type('number') z!: number;
+  @type('number') w!: number;
 
   constructor(rot: Quaternion) {
     super();
@@ -37,10 +37,10 @@ export class Rotation extends Schema {
   }
 }
 export class BarrelRotation extends Schema {
-  @type('number') x: number;
-  @type('number') y: number;
-  @type('number') z: number;
-  @type('number') w: number;
+  @type('number') x!: number;
+  @type('number') y!: number;
+  @type('number') z!: number;
+  @type('number') w!: number;
 
   constructor(rot: Quaternion) {
     super();
@@ -54,10 +54,10 @@ export class BarrelRotation extends Schema {
   }
 }
 export class TurretRotation extends Schema {
-  @type('number') x: number;
-  @type('number') y: number;
-  @type('number') z: number;
-  @type('number') w: number;
+  @type('number') x!: number;
+  @type('number') y!: number;
+  @type('number') z!: number;
+  @type('number') w!: number;
 
   constructor(rot: Quaternion) {
     super();
@@ -71,8 +71,8 @@ export class TurretRotation extends Schema {
   }
 }
 export class LastProcessedInput extends Schema {
-  @type('number') step: number;
-  @type('number') timestamp: number;
+  @type('number') step!: number;
+  @type('number') timestamp!: number;
 
   constructor(message: IMessageInput) {
     super();
@@ -88,9 +88,9 @@ export class Player extends Schema {
   @type('string') sid: string;
   @type('string') uid: string;
   @type('boolean') canFire: boolean;
-  @type('number') leftSpeed: number;
-  @type('number') rightSpeed: number;
-  @type('number') health: number;
+  @type('number') leftSpeed!: number;
+  @type('number') rightSpeed!: number;
+  @type('number') health!: number;
   @type(Position) position: Position;
   @type(Rotation) rotation: Rotation;
   @type(BarrelRotation) barrelRotation: BarrelRotation;
@@ -103,9 +103,9 @@ export class Player extends Schema {
     this.uid = uid;
     this.canFire = false;
     this.position = new Position(tank.body.position);
-    this.rotation = new Rotation(tank.body.rotationQuaternion);
-    this.barrelRotation = new BarrelRotation(tank.barrel.rotationQuaternion);
-    this.turretRotation = new TurretRotation(tank.turret.rotationQuaternion);
+    this.rotation = new Rotation(tank.body.rotationQuaternion!);
+    this.barrelRotation = new BarrelRotation(tank.barrel.rotationQuaternion!);
+    this.turretRotation = new TurretRotation(tank.turret.rotationQuaternion!);
     this.lastProcessedInput = new LastProcessedInput({ step: -1, timestamp: 0, input: null });
   }
 
@@ -114,15 +114,15 @@ export class Player extends Schema {
     this.rightSpeed = tank.rightSpeed;
     this.health = tank.health;
     this.position = new Position(tank.body.position);
-    this.rotation = new Rotation(tank.body.rotationQuaternion);
-    this.barrelRotation = new BarrelRotation(tank.barrel.rotationQuaternion);
-    this.turretRotation = new TurretRotation(tank.turret.rotationQuaternion);
+    this.rotation = new Rotation(tank.body.rotationQuaternion!);
+    this.barrelRotation = new BarrelRotation(tank.barrel.rotationQuaternion!);
+    this.turretRotation = new TurretRotation(tank.turret.rotationQuaternion!);
     this.lastProcessedInput = new LastProcessedInput(lastProcessedInput);
   }
 }
 
 export class RoomState extends Schema {
-  @type('string') status: string;
+  @type('string') status!: string;
   @type('number') startTimestamp: number;
   @type({ map: Player }) players = new MapSchema<Player>();
 
