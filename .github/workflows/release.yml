@@ -57,7 +57,20 @@ jobs:
           ssh "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" << 'EOF'
             set -e
             sudo systemctl restart tank-me
-            sleep 3
             sudo systemctl is-active --quiet tank-me
-            echo "Tank ME server is running."
           EOF
+
+      - name: Health check
+        run: |
+          for i in {1..10}; do
+            if curl --fail --silent --show-error \
+              https://server.tankme.saurabhagat.dev/__healthcheck; then
+              echo
+              echo "Tank Me server is healthy."
+              exit 0
+            fi
+            echo "Health check failed, retrying in 2 seconds..."
+            sleep 2
+          done
+          echo "Tank Me server failed health check."
+          exit 1
