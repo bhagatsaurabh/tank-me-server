@@ -39,9 +39,11 @@ export class Shell {
     this.observers.push(
       tank.world.physicsPlugin.onCollisionObservable.add((ev: unknown) =>
         this.onCollide(ev as IPhysicsCollisionEvent)
-      )
+      ) as Observer<unknown>
     );
-    this.observers.push(this.tank.world.scene.onBeforeStepObservable.add(this.beforeStep.bind(this)));
+    this.observers.push(
+      this.tank.world.scene.onBeforeStepObservable.add(this.beforeStep.bind(this)) as Observer<unknown>
+    );
   }
   private static setRefShell(scene: Scene) {
     if (Shell.refShell) return;

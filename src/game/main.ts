@@ -119,7 +119,7 @@ export class World {
     // 2. Process inputs
     for (let i = 0; i < Math.max(...playerMessages.map((messages) => messages.length)); i += 1) {
       players.forEach((player, idx) => {
-        playerMessages[idx][i]?.input && this.players[player.sid].applyInputs(playerMessages[idx][i].input);
+        playerMessages[idx][i]?.input && this.players[player.sid].applyInputs(playerMessages[idx][i].input!);
       });
       this.scene._advancePhysicsEngineStep(World.deltaTime);
     }
