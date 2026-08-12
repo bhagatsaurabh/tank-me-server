@@ -1,35 +1,34 @@
-import { Room, Client } from '@colyseus/core';
-import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
-import '@babylonjs/loaders/glTF/2.0/glTFLoader';
+import { Client, Room } from 'colyseus';
 import { Nullable } from '@babylonjs/core';
 
-import { Player, RoomState } from './schema/RoomState';
-import { auth } from '../config/firebase';
-import { World } from '@/game/main';
-import { InputManager } from '@/game/input';
-import { MatchStats, MessageType, PlayerStats } from '@/types/types';
-import { IMessageInput } from '@/types/interfaces';
-import { Monitor } from '@/monitor/monitor';
-import { calcPoints } from '@/game/utils/utils';
-import { updatePlayerStats } from '@/database/driver';
+import { Player, RoomState } from './schema/RoomState.js';
+import { auth } from '../config/firebase.js';
+import { World } from '@/game/main.js';
+import { InputManager } from '@/game/input.js';
+import { MatchStats, MessageType, PlayerStats } from '@/types/types.js';
+import { IMessageInput } from '@/types/interfaces.js';
+import { Monitor } from '@/monitor/monitor.js';
+import { calcPoints } from '@/game/utils/utils.js';
+import { updatePlayerStats } from '@/database/driver.js';
+import { DecodedIdToken } from 'firebase-admin/auth';
 
-export class GameRoom extends Room<RoomState> {
+export class GameRoom extends Room<{ state: RoomState }> {
   maxClients = 2;
   matchDuration = 600000;
   inputs: Record<string, InputManager> = {};
-  world: World;
-  monitor: Monitor;
+  world!: World;
+  monitor!: Monitor;
   isMatchEnded = false;
   stats: MatchStats = {};
-  timerHandle: NodeJS.Timeout = null;
+  timerHandle: NodeJS.Timeout | null = null;
 
   async onCreate(_options: any) {
     this.world = await World.create(this);
     this.monitor = new Monitor(this);
-    this.setState(new RoomState());
+    this.state = new RoomState();
     this.setMessageListeners();
     this.setSimulationInterval(() => {
-      this.state.players.forEach((player) => {
+      this.state.players.forEach((player: Player) => {
         if (this.world.lastProcessedInput[player.sid]) {
           player.update(this.world.players[player.sid], this.world.lastProcessedInput[player.sid]);
         }
@@ -41,7 +40,7 @@ export class GameRoom extends Room<RoomState> {
   async onAuth(_client: any, options: { accessToken: string }) {
     const idToken = await auth.verifyIdToken(options.accessToken);
     let hasJoined = false;
-    this.state.players.forEach((player) => {
+    this.state.players.forEach((player: Player) => {
       if (player.uid === idToken.uid) hasJoined = true;
     });
     return hasJoined ? null : idToken;
@@ -63,7 +62,7 @@ export class GameRoom extends Room<RoomState> {
       this.monitor.start(true);
     }
   }
-  async onLeave(client: Client, _consented: boolean) {
+  async onLeave(client: Client) {
     if (this.state.players.has(client.sessionId)) {
       if (this.world.players[client.sessionId]) {
         this.world.removeTank(client.sessionId);
@@ -104,14 +103,14 @@ export class GameRoom extends Room<RoomState> {
     this.isMatchEnded = true;
     if (!isDraw) {
       if (!winner) {
-        this.state.players.forEach((player) => {
+        this.state.players.forEach((player: Player) => {
           if (player.sid !== loser) {
             winner = player.sid;
           }
         });
       }
       if (!loser) {
-        this.state.players.forEach((player) => {
+        this.state.players.forEach((player: Player) => {
           if (player.sid !== winner) {
             loser = player.sid;
           }
@@ -119,7 +118,7 @@ export class GameRoom extends Room<RoomState> {
       }
     }
 
-    await Promise.all(this.clients.map((client) => this.sendMatchEnd(client, winner, loser, isDraw)));
+    await Promise.all(this.clients.map((client) => this.sendMatchEnd(client, winner!, loser!, isDraw)));
   }
 
   logStat<K extends keyof PlayerStats>(id: string, key: K, data: PlayerStats[K]) {
@@ -130,7 +129,7 @@ export class GameRoom extends Room<RoomState> {
   startTimer() {
     this.timerHandle = setInterval(async () => {
       if (Date.now() - this.state.startTimestamp >= this.matchDuration) {
-        clearInterval(this.timerHandle);
+        clearInterval(this.timerHandle!);
         await this.matchEnd(null, null, true);
         this.disconnect();
       }
@@ -138,9 +137,9 @@ export class GameRoom extends Room<RoomState> {
   }
   async sendMatchEnd(client: Client, winner: string, loser: string, isDraw = false) {
     this.stats[client.sessionId].points = calcPoints(this.stats[client.sessionId]);
-    const uid = this.state.players.get(client.sessionId).uid;
+    const uid = this.state.players.get(client.sessionId)?.uid;
 
-    await updatePlayerStats(uid, this.stats[client.sessionId].points, client.sessionId === winner);
+    await updatePlayerStats(uid!, this.stats[client.sessionId].points, client.sessionId === winner);
     client.send(MessageType.MATCH_END, { winner, loser, stats: this.stats, isDraw });
   }
 }

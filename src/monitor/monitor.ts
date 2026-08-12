@@ -1,12 +1,12 @@
-import { GameRoom } from '@/rooms/GameRoom';
-import { ClientStat } from './client-stat';
-import { clamp } from '@/game/utils/utils';
+import { GameRoom } from '@/rooms/GameRoom.js';
+import { ClientStat } from './client-stat.js';
+import { clamp } from '@/game/utils/utils.js';
 
 export class Monitor {
   debug = false;
   private _logInterval = 1000;
   private clientStats: Record<string, ClientStat> = {};
-  private handle: NodeJS.Timeout;
+  private handle!: NodeJS.Timeout;
   set logInterval(ms: number) {
     this._logInterval = clamp(ms, 500, Number.MAX_SAFE_INTEGER);
   }

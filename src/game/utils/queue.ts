@@ -1,5 +1,5 @@
 import { Nullable } from '@babylonjs/core';
-import { List } from './list';
+import { List } from './list.js';
 
 export class Queue<T> {
   list = new List<T>();

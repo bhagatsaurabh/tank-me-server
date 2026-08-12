@@ -1,24 +1,30 @@
-import { Observer } from '@babylonjs/core';
-import { Scalar, Vector3, Space, Axis } from '@babylonjs/core/Maths';
-import { AbstractMesh, Mesh, MeshBuilder, TransformNode } from '@babylonjs/core/Meshes';
 import {
-  PhysicsShapeConvexHull,
-  PhysicsConstraintMotorType,
-  PhysicsShapeContainer,
-  PhysicsMotionType,
-  PhysicsConstraintAxis,
+  AbstractMesh,
+  Axis,
+  Mesh,
+  MeshBuilder,
+  Observer,
   Physics6DoFConstraint,
-  PhysicsBody,
   PhysicsAggregate,
-  PhysicsShapeSphere
-} from '@babylonjs/core/Physics';
+  PhysicsBody,
+  PhysicsConstraintAxis,
+  PhysicsConstraintMotorType,
+  PhysicsMotionType,
+  PhysicsShapeContainer,
+  PhysicsShapeConvexHull,
+  PhysicsShapeSphere,
+  Scalar,
+  Space,
+  TransformNode,
+  Vector3
+} from '@babylonjs/core';
 
-import { Shell } from './shell';
-import { avg, clamp } from '@/game/utils/utils';
-import { Player } from '@/rooms/schema/RoomState';
-import { World } from '../main';
-import { GameInputType, MessageType, PlayerInputs } from '@/types/types';
-import { IMessageFire } from '@/types/interfaces';
+import { Shell } from './shell.js';
+import { avg, clamp } from '@/game/utils/utils.js';
+import { Player } from '@/rooms/schema/RoomState.js';
+import { World } from '../main.js';
+import { GameInputType, MessageType, PlayerInputs } from '@/types/types.js';
+import { IMessageFire } from '@/types/interfaces.js';
 
 export class Tank {
   private static config = {
@@ -50,7 +56,7 @@ export class Tank {
     loadCooldown: 2500
   };
 
-  state: Player;
+  state!: Player;
   body!: TransformNode;
   barrel!: AbstractMesh;
   turret!: AbstractMesh;
@@ -69,7 +75,12 @@ export class Tank {
   health: number = 100.0;
   physicsBodies: PhysicsBody[] = [];
 
-  private constructor(public world: World, public id: string, rootMesh: AbstractMesh, public spawn: Vector3) {
+  private constructor(
+    public world: World,
+    public id: string,
+    rootMesh: AbstractMesh,
+    public spawn: Vector3
+  ) {
     this.setTransform(rootMesh);
     this.setPhysics(rootMesh);
 
@@ -361,11 +372,11 @@ export class Tank {
       isMoving = true;
     }
     if (input[GameInputType.LEFT]) {
-      this.left(World.deltaTime, isAccelerating);
+      this.left(World.deltaTime, !!isAccelerating);
       isMoving = true;
     }
     if (input[GameInputType.RIGHT]) {
-      this.right(World.deltaTime, isAccelerating);
+      this.right(World.deltaTime, !!isAccelerating);
       isMoving = true;
     }
     if (input[GameInputType.BRAKE]) {

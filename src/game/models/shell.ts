@@ -1,18 +1,21 @@
-import { Scene } from '@babylonjs/core';
-import { Quaternion, Vector3 } from '@babylonjs/core/Maths';
-import { MeshBuilder, Mesh, AbstractMesh } from '@babylonjs/core/Meshes';
 import {
-  PhysicsAggregate,
-  type IPhysicsCollisionEvent,
-  PhysicsBody,
+  AbstractMesh,
+  IPhysicsCollisionEvent,
   LockConstraint,
-  PhysicsShapeSphere
-} from '@babylonjs/core/Physics';
-import { Observer } from '@babylonjs/core/Misc';
+  Mesh,
+  MeshBuilder,
+  Observer,
+  PhysicsAggregate,
+  PhysicsBody,
+  PhysicsShapeSphere,
+  Quaternion,
+  Scene,
+  Vector3
+} from '@babylonjs/core';
 
-import type { Tank } from './tank';
-import { forwardVector } from '@/game/utils/utils';
-import { luid } from '../utils/utils';
+import type { Tank } from './tank.js';
+import { forwardVector } from '@/game/utils/utils.js';
+import { luid } from '../utils/utils.js';
 
 export class Shell {
   private static refShell: Mesh;
@@ -23,14 +26,21 @@ export class Shell {
   private lock!: LockConstraint;
   private energy = 0.02;
   private impactEnergy = 5;
-  private observers: Observer<any>[] = [];
+  private observers: Observer<unknown>[] = [];
 
-  private constructor(public tank: Tank, mesh: AbstractMesh) {
+  private constructor(
+    public tank: Tank,
+    mesh: AbstractMesh
+  ) {
     this.playerId = tank.id;
     this.setTransform(mesh);
     this.setPhysics(tank.barrel.physicsBody!);
 
-    this.observers.push(tank.world.physicsPlugin.onCollisionObservable.add((ev) => this.onCollide(ev)));
+    this.observers.push(
+      tank.world.physicsPlugin.onCollisionObservable.add((ev: unknown) =>
+        this.onCollide(ev as IPhysicsCollisionEvent)
+      )
+    );
     this.observers.push(this.tank.world.scene.onBeforeStepObservable.add(this.beforeStep.bind(this)));
   }
   private static setRefShell(scene: Scene) {
@@ -93,9 +103,9 @@ export class Shell {
         shellCollider.transformNode.getDirection(forwardVector).normalize().scale(this.impactEnergy),
         this.mesh.absolutePosition.clone()
       );
-      const hitPlayer = Object.values(this.tank.world.players).find((tank) =>
-        tank.physicsBodies.includes(otherCollider)
-      );
+      const hitPlayer = Object.values(this.tank.world.players).find((tank: unknown) =>
+        (tank as Tank).physicsBodies.includes(otherCollider)
+      ) as Tank;
 
       let damage = 0;
       if (hitPlayer?.barrel === otherCollider.transformNode) {

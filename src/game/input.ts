@@ -1,6 +1,6 @@
-import { IMessageInput } from '@/types/interfaces';
-import { GameInputType } from '@/types/types';
-import { Queue } from './utils/queue';
+import { IMessageInput } from '@/types/interfaces.js';
+import { GameInputType } from '@/types/types.js';
+import { Queue } from './utils/queue.js';
 
 export class InputManager {
   buffer: Queue<IMessageInput>;

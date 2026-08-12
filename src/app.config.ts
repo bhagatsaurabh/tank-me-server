@@ -8,8 +8,8 @@ import { static as static_ } from 'express';
 import HavokPhysics, { type HavokPhysicsWithBindings } from '@babylonjs/havok';
 import expressBasicAuth from 'express-basic-auth';
 
-import { GameRoom } from './rooms/GameRoom';
-import { Lobby } from './rooms/Lobby';
+import { GameRoom } from './rooms/GameRoom.js';
+import { Lobby } from './rooms/Lobby.js';
 
 export let physicsEngine: HavokPhysicsWithBindings;
 
@@ -27,7 +27,7 @@ export default config({
     app.use('/assets', static_('assets'));
     const basicAuthMiddleware = expressBasicAuth({
       users: {
-        admin: process.env.COLYSEUS_ADMIN_KEY
+        admin: process.env.COLYSEUS_ADMIN_KEY!
       },
       challenge: true
     });
@@ -42,6 +42,6 @@ export default config({
         '../node_modules/@babylonjs/havok/lib/esm/HavokPhysics.wasm'
       )
     );
-    HavokPhysics({ wasmBinary: havokBinary }).then((engine) => (physicsEngine = engine));
+    HavokPhysics({ wasmBinary: havokBinary.buffer }).then((engine) => (physicsEngine = engine));
   }
 });

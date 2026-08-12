@@ -1,12 +1,10 @@
-import { port } from '@/index';
-import { Scene } from '@babylonjs/core';
-import { MeshBuilder, type GroundMesh } from '@babylonjs/core/Meshes';
-import { PhysicsAggregate, PhysicsShapeType } from '@babylonjs/core/Physics';
+import { GroundMesh, MeshBuilder, PhysicsAggregate, PhysicsShapeType, Scene } from '@babylonjs/core';
+import { port } from '@/index.js';
 import { createCanvas, loadImage } from 'canvas';
 
 export class Ground {
   static groundFriction = 1;
-  mesh: GroundMesh;
+  mesh!: GroundMesh;
 
   private constructor() {}
 
@@ -35,7 +33,7 @@ export class Ground {
             maxHeight: 14,
             updatable: false,
             onReady: (mesh) => Ground.onGroundCreated(ground, scene, mesh, resolve),
-            onError: (message: string, exception: any) => reject({ message, exception })
+            onError: (message?: string, exception?: any) => reject({ message, exception })
           },
           scene
         );
