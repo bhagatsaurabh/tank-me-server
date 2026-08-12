@@ -17,16 +17,16 @@ import {
   PhysicsShapeType
 } from '@babylonjs/core';
 
-import { choose, gravityVector, randInRange } from '@/game/utils/utils.js';
+import { choose, gravityVector, randInRange } from '../game/utils/utils.js';
 import { Tank } from './models/tank.js';
 import { Ground } from './models/ground.js';
-import { SpawnAxis } from '@/types/types.js';
+import { SpawnAxis } from '../types/types.js';
 import { spawnAxes } from './constants.js';
-import { GameRoom } from '@/rooms/GameRoom.js';
-import { physicsEngine } from '@/app.config.js';
-import { Player } from '@/rooms/schema/RoomState.js';
-import { IMessageInput } from '@/types/interfaces.js';
-import { port } from '@/index.js';
+import { GameRoom } from '../rooms/GameRoom.js';
+import { physicsEngine } from '../app.config.js';
+import { Player } from '../rooms/schema/RoomState.js';
+import { IMessageInput } from '../types/interfaces.js';
+import { port } from '../index.js';
 
 export class World {
   private static timeStep = 1 / 60;

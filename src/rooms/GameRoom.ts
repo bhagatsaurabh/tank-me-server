@@ -3,13 +3,13 @@ import { Nullable } from '@babylonjs/core';
 
 import { Player, RoomState } from './schema/RoomState.js';
 import { auth } from '../config/firebase.js';
-import { World } from '@/game/main.js';
-import { InputManager } from '@/game/input.js';
-import { MatchStats, MessageType, PlayerStats } from '@/types/types.js';
-import { IMessageInput } from '@/types/interfaces.js';
-import { Monitor } from '@/monitor/monitor.js';
-import { calcPoints } from '@/game/utils/utils.js';
-import { updatePlayerStats } from '@/database/driver.js';
+import { World } from '../game/main.js';
+import { InputManager } from '../game/input.js';
+import { MatchStats, MessageType, PlayerStats } from '../types/types.js';
+import { IMessageInput } from '../types/interfaces.js';
+import { Monitor } from '../monitor/monitor.js';
+import { calcPoints } from '../game/utils/utils.js';
+import { updatePlayerStats } from '../database/driver.js';
 import { DecodedIdToken } from 'firebase-admin/auth';
 
 export class GameRoom extends Room<{ state: RoomState }> {

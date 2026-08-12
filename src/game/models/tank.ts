@@ -20,11 +20,11 @@ import {
 } from '@babylonjs/core';
 
 import { Shell } from './shell.js';
-import { avg, clamp } from '@/game/utils/utils.js';
-import { Player } from '@/rooms/schema/RoomState.js';
+import { avg, clamp } from '../../game/utils/utils.js';
+import { Player } from '../../rooms/schema/RoomState.js';
 import { World } from '../main.js';
-import { GameInputType, MessageType, PlayerInputs } from '@/types/types.js';
-import { IMessageFire } from '@/types/interfaces.js';
+import { GameInputType, MessageType, PlayerInputs } from '../../types/types.js';
+import { IMessageFire } from '../../types/interfaces.js';
 
 export class Tank {
   private static config = {

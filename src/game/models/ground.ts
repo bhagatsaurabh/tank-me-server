@@ -1,5 +1,5 @@
 import { GroundMesh, MeshBuilder, PhysicsAggregate, PhysicsShapeType, Scene } from '@babylonjs/core';
-import { port } from '@/index.js';
+import { port } from '../../index.js';
 import { createCanvas, loadImage } from 'canvas';
 
 export class Ground {

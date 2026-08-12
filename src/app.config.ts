@@ -38,7 +38,7 @@ export default config({
     // Load HavokPhysics binary
     const havokBinary = readFileSync(
       join(
-        dirname(fileURLToPath(pathToFileURL(__filename).toString())),
+        dirname(fileURLToPath(import.meta.url)),
         '../node_modules/@babylonjs/havok/lib/esm/HavokPhysics.wasm'
       )
     );

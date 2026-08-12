@@ -1,8 +1,8 @@
 import { Quaternion, Vector3 } from '@babylonjs/core';
 import { MapSchema, Schema, type } from '@colyseus/schema';
 
-import { Tank } from '@/game/models/tank.js';
-import { IMessageInput } from '@/types/interfaces.js';
+import { Tank } from '../../game/models/tank.js';
+import { IMessageInput } from '../../types/interfaces.js';
 
 export class Position extends Schema {
   @type('number') x!: number;

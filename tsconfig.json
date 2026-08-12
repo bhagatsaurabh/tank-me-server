@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "outDir": "build",
-    "rootDir": ".",
+    "outDir": "dist",
+    "rootDir": "./src",
     "target": "ESNext",
     "module": "NodeNext",
     "moduleResolution": "nodenext",
@@ -9,10 +9,7 @@
     "experimentalDecorators": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "useDefineForClassFields": false,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "useDefineForClassFields": false
   },
   "include": ["src"]
 }

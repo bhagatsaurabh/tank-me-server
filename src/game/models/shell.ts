@@ -14,7 +14,7 @@ import {
 } from '@babylonjs/core';
 
 import type { Tank } from './tank.js';
-import { forwardVector } from '@/game/utils/utils.js';
+import { forwardVector } from '../../game/utils/utils.js';
 import { luid } from '../utils/utils.js';
 
 export class Shell {

@@ -1,5 +1,5 @@
-import { IMessageInput } from '@/types/interfaces.js';
-import { GameInputType } from '@/types/types.js';
+import { IMessageInput } from '../types/interfaces.js';
+import { GameInputType } from '../types/types.js';
 import { Queue } from './utils/queue.js';
 
 export class InputManager {

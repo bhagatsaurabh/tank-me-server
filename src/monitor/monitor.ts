@@ -1,6 +1,6 @@
-import { GameRoom } from '@/rooms/GameRoom.js';
+import { GameRoom } from '../rooms/GameRoom.js';
 import { ClientStat } from './client-stat.js';
-import { clamp } from '@/game/utils/utils.js';
+import { clamp } from '../game/utils/utils.js';
 
 export class Monitor {
   debug = false;
