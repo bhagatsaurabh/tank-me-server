@@ -3,7 +3,7 @@
   "name": "tankme-server",
   "version": "1.0.0",
   "description": "TankMe! Authoritative Server",
-  "main": "build/index.js",
+  "main": "dist/index.js",
   "type": "module",
   "engines": {
     "node": "24.x"
@@ -16,9 +16,10 @@
   "homepage": "https://github.com/bhagatsaurabh/tankme-server#readme",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "clean": "rimraf build",
+    "clean": "rimraf dist",
     "build": "npm run clean && tsc",
     "start": "tsx src/index.ts",
+    "serve": "node dist/index.js",
     "debug": "node --inspect --loader tsx src/index.ts"
   },
   "dependencies": {

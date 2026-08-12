@@ -1,4 +1,4 @@
-import { firestore } from '@/config/firebase.js';
+import { firestore } from '../config/firebase.js';
 
 export const updatePlayerStats = async (uid: string, points: number, didWin = false) => {
   const profileSnap = await firestore.collection('users').doc(uid).get();

@@ -1,3 +1,5 @@
 node_modules/
-.env.development
 build/
+dist/
+.env.local
+.env.development
