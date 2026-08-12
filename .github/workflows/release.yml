@@ -44,10 +44,11 @@ jobs:
           } | ssh "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             "cat > /home/ubuntu/tank-me-server/.env.production"
 
-      - name: Install dependencies and restart
+      - name: Install dependencies
         run: |
           ssh "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" << 'EOF'
             set -e
+            export PATH="/home/ubuntu/.nvm/versions/node/v24.19.0/bin:$PATH"
             cd /home/ubuntu/tank-me-server
             npm ci --omit=dev
           EOF
